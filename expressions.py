@@ -145,7 +145,8 @@ def models(world, expression):
         return expression.children[0].string == expression.children[1].string
         
     elif expression.name == 'imply':
-        if models(world, expression.children[0]) and not models(world, expression.children[1]):
+        #if models(world, expression.children[0]) and not models(world, expression.children[1]):
+        if not models(world, expression.children[0]) or models(world, expression.children[1]): # shouldnt it be like this?
             print(expression.children[0].string, '  :  ', expression.children[1].string)
             print("imply returned FALSE")
             return False
