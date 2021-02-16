@@ -1,19 +1,42 @@
+OPERATORS = ['and', 'or', 'not', '=', 'imply', 'when', 'exists', 'forall']
+
 class Expression:
     def __init__(self, string):
+        self.string = string
         self.name = string[0]
         self.children = []
         for child in string[1:]:
             self.children.append(Expression(child))
             
+    def apply_self_on(self, world):
+        if self.name == "and":
+            for child in self.children:
+                if child.name in OPERATORS:
+                    child.apply_self_on(world)
+                else:
+                    world.atoms.add(child.string)
+        
+        elif self.name == "not":
+            if self.children[0].string in world.atoms:
+                world.atoms.remove(self.children[0].string)
+        
+        elif self.name == "when":
+            if models(world, self.children[0]):
+                self.children[1].apply_self_on(world)
+                
+        elif self.name == "forall": # to be implemented
+            pass
+                
+        else: # currently includes all other operators
+            world.atoms.add(self.string)
+        
+            
 class World:
     def __init__(self, atoms, sets):
         self.sets = sets
-        self.atoms = set()
-        for a in atoms:
-            self.atoms.add(Expression(a))
+        self.atoms = set(atoms)
 
-
-""" make_expression(("or", ("on", "a", "b"), ("on", "a", "d"))) """
+            
 def make_expression(ast):
     """
     This function receives a sequence (list or tuple) representing the abstract syntax tree of a logical expression and returns an expression object suitable for further processing.
@@ -99,42 +122,46 @@ def models(world, expression):
     The return value of this function should be True if the condition holds in the given world, and False otherwise.
     """
     
-    if expression.name == 'and':
+    if expression.string in world.atoms: # recursion anchor
+        return True
+    
+    elif expression.name == 'and':
         for a in expression.children:
-            if not a in world.atoms:
-                return False
             if not models(world, a):
                 return False
         return True
     
-    if expression.name == 'or':
+    elif expression.name == 'or':
         for a in expression.children:
-            if a in world.atoms:
-                return True
             if models(world, a):
                 return True
         return False
         
-    if expression.name == 'not':
+    elif expression.name == 'not':
         if expression.children[0] in world.atoms:
             return False
         
-    if expression.name == '=':
-        if expression.children[0] == expression.children[1]:
-            return True
+    # _____In_developement___________________
+    elif expression.name == '=':
+        # some substitution
+        return expression.children[0] == expression.children[1]
         
-    if expression.name == 'imply':
+    elif expression.name == 'imply':
+        # some substitution
+        if models(world, expression.children[0]) and not models(world, expression.children[1]):
+            return False
+        return True
+     
+    elif expression.name == 'exists':
         # do stuff
         pass
         
-    if expression.name == 'exists':
+    elif expression.name == 'forall':
         # do stuff
         pass
-        
-    if expression.name == 'forall':
-        # do stuff
-        pass
-        
+    
+    #________________________________________
+
     return False
     
 def substitute(expression, variable, value):
@@ -145,7 +172,12 @@ def substitute(expression, variable, value):
     Do *not* replace the variable in-place, always return a new expression object. When you implement the quantifiers, you should use this same functionality to expand the formula to all possible 
     replacements for the variable that is quantified over.
     """
-    return expression
+    # expression, ?l, [Airport, Cinema, ...]
+    
+    # deep copy
+    substi = Expresion(expression.string)
+    # change substi - to be implemented
+    return substi
     
 def apply(world, effect):
     """
@@ -167,7 +199,8 @@ def apply(world, effect):
     
     Hint: If your world stores the atoms in a set, you can determine the change caused by the effect as two sets: an add set and a delete set, and get the atoms for the new world using basic set operations.
     """
-
+    
+    effect.apply_self_on(world)
     return world
 
 
@@ -176,6 +209,7 @@ if __name__ == "__main__":
     exp = make_expression(("or", ("on", "a", "b"), ("on", "a", "d")))
     world = make_world([("on", "a", "b"), ("on", "b", "c"), ("on", "c", "d")], {})
     
+    
     print("Should be True: ", end="")
     print(models(world, exp))
     change = make_expression(["and", ("not", ("on", "a", "b")), ("on", "a", "c")])
@@ -183,8 +217,27 @@ if __name__ == "__main__":
     print("Should be False: ", end="")
     print(models(apply(world, change), exp))
     
+    # ______own_test_case_____________
+    print("Test when")
     
-    print("mickey/minny example")
+    exp2 = make_expression(("when", ("on", "a", "b"), ("not", ("on", "a", "b"))))    
+    world2 = make_world([("on", "a", "b"), ("on", "b", "c"), ("on", "c", "d")], {})
+    applied = apply(world2, exp2)
+    print("is false ", models(world2, make_expression(("on", "a", "b"))))
+    print("is true ", models(world2, make_expression(("on", "b", "c"))))
+    
+    print("Test imply")
+    
+    exp3 = make_expression(("imply", ("on", "a", "b"), ("not", ("on", "a", "b"))))
+    exp4 = make_expression(("imply", ("on", "a", "b"), ("on", "a", "b")))  
+    world3 = make_world([("on", "a", "b"), ("on", "b", "c"), ("on", "c", "d")], {})
+    print("is false ", models(world3, exp3))
+    print("is true ", models(world3, exp4))
+    
+    # ____end_own_test_case___________
+    
+    
+    print("\nmickey/minny example")
     world = make_world([("at", "store", "mickey"), ("at", "airport", "minny")], {"Locations": ["home", "park", "store", "airport", "theater"], "": ["home", "park", "store", "airport", "theater", "mickey", "minny"]})
     exp = make_expression(("and", 
         ("not", ("at", "park", "mickey")), 
@@ -200,7 +253,8 @@ if __name__ == "__main__":
                             ("imply",
                                     ("at", "?l", "mickey"),
                                     ("at", "?l", "minny"))))))
-                                    
+    
+    print("Test substitution")
     print("Should be True: ", end="")
     print(models(world, exp))
     become_friends = make_expression(("friends", "mickey", "minny"))
@@ -223,7 +277,6 @@ if __name__ == "__main__":
                                                       ("at", "home", "minny"), 
                                                       ("not", ("at", "store", "minny"))))))
                                                       
-    
     print("Should be True: ", end="")
     print(models(apply(movedworld, move_both_cond), exp))
     
@@ -238,7 +291,7 @@ if __name__ == "__main__":
                                        ("and", ("at", "?l", "mickey"),
                                                ("at", "?l1", "minny")),
                                        ("=", "?l", "?l1")))))
-                                       
+    
     print("Should be True: ", end="")
     print(models(apply(movedworld, move_both_cond), exp1))
     
