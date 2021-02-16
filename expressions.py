@@ -148,9 +148,9 @@ def models(world, expression):
         #if models(world, expression.children[0]) and not models(world, expression.children[1]):
         if not models(world, expression.children[0]) or models(world, expression.children[1]): # shouldnt it be like this?
             print(expression.children[0].string, '  :  ', expression.children[1].string)
-            print("imply returned FALSE")
-            return False
-        return True
+            #print("imply returned FALSE")
+            return True
+        return False
 
     elif expression.name == 'exists':
         for value in world.sets[expression.children[0].children[1].string]:
@@ -161,7 +161,7 @@ def models(world, expression):
     elif expression.name == 'forall':
         for value in world.sets[expression.children[0].children[1].string]:
             if not models(world, substitute(str(expression.children[1].string), expression.children[0].string[0], value)):
-                print('FORALL RETURNS FALSE')
+                #print('FORALL RETURNS FALSE')
                 return False
         return True
 
@@ -270,34 +270,63 @@ if __name__ == "__main__":
     
     print('---------------IM-HERE------------------')
     print(models(movedworld, exp))
-    
-    
-#     move_both_cond = make_expression(("and", 
-#                                            ("at", "home", "mickey"), 
-#                                            ("not", ("at", "store", "mickey")), 
-#                                            ("when", 
-#                                                  ("at", "store", "minny"), 
-#                                                  ("and", 
-#                                                       ("at", "home", "minny"), 
+
+    move_both_cond = make_expression(("and",
+                                      ("at", "home", "mickey"),
+                                      ("not", ("at", "store", "mickey")),
+                                      ("when",
+                                       ("at", "store", "minny"),
+                                       ("and",
+                                        ("at", "home", "minny"),
+                                        ("not", ("at", "store", "minny"))))))
+
+    print("Should be True: ", end="")
+    print(models(apply(movedworld, move_both_cond), exp))
+
+    print("Should be False: ", end="")
+    print(models(apply(friendsworld, move_both_cond), exp))
+
+    exp1 = make_expression(("forall",
+                            ("?l", "-", "Locations"),
+                            ("forall",
+                             ("?l1", "-", "Locations"),
+                             ("imply",
+                              ("and", ("at", "?l", "mickey"),
+                               ("at", "?l1", "minny")),
+                              ("=", "?l", "?l1")))))
+
+    print("Should be True: ", end="")
+    print(models(apply(movedworld, move_both_cond), exp1))
+
+    print("Should be False: ", end="")
+    print(models(apply(friendsworld, move_both_cond), exp1))
+
+#     move_both_cond = make_expression(("and",
+#                                            ("at", "home", "mickey"),
+#                                            ("not", ("at", "store", "mickey")),
+#                                            ("when",
+#                                                  ("at", "store", "minny"),
+#                                                  ("and",
+#                                                       ("at", "home", "minny"),
 #                                                       ("not", ("at", "store", "minny"))))))
-                                                      
+
 #     print("Should be True: ", end="")
 #     print(models(apply(movedworld, move_both_cond), exp))
-    
+
 #     print("Should be False: ", end="")
 #     print(models(apply(friendsworld, move_both_cond), exp))
-    
-#     exp1 = make_expression(("forall", 
+
+#     exp1 = make_expression(("forall",
 #                             ("?l", "-", "Locations"),
 #                             ("forall",
 #                                   ("?l1", "-", "Locations"),
-#                                   ("imply", 
+#                                   ("imply",
 #                                        ("and", ("at", "?l", "mickey"),
 #                                                ("at", "?l1", "minny")),
 #                                        ("=", "?l", "?l1")))))
-    
+
 #     print("Should be True: ", end="")
 #     print(models(apply(movedworld, move_both_cond), exp1))
-    
+
 #     print("Should be False: ", end="")
 #     print(models(apply(friendsworld, move_both_cond), exp1))
