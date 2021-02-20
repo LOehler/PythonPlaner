@@ -1,5 +1,5 @@
 import graph
-import queue
+from queue import PriorityQueue
 
 def default_heuristic(n, edge):
     """
@@ -28,53 +28,43 @@ def astar(start, heuristic, goal):
         - expanded is the total number of nodes that were expanded (i.e. whose neighbors were added to the frontier)
     """
     
-    frontier = queue.PriorityQueue() # decides which nodes gets extendet next by sorting after expected cost (cost + heuristic_cost)
+    frontier = PriorityQueue() # decides which nodes gets extendet next by sorting after expected cost (cost + heuristic_cost)
     expa_count = 0 # counts how many nodes have been expanded
     vis_count = 0 # counts how many nodes have been visited (not actually visited but looked at the edges of them)
     edge_path = [] # the path to be returned
+    cur_node = start # for better readability
 
-    while(True): # Runs until goal is found or frontier is empty
+    while True: # Runs until goal is found or frontier is empty
         
         expa_count += 1
-        vis_count += len(start.get_neighbors())
+        vis_count += len(cur_node.get_neighbors())
         # getting all neighbors and adding it to PriorityQueue
-        for neighbor in start.get_neighbors(): # get_neighbors() = list with graph.Edge
+        for neighbor in cur_node.get_neighbors(): # get_neighbors() = list with graph.Edge
         # looking for best heuristic in all neighbors
         # A* adds to the cost for the next neighbor a heuristic to improve search
-            frontier.put((heuristic(start, neighbor) + neighbor.cost, neighbor))
         
-        # TODO: update edge_path
-        
+        # TODO:
+            # if not neighbor in frontier:
+            # if shorter_path found:
+                # update frontier
+            frontier.put((heuristic(cur_node, neighbor) + neighbor.cost, neighbor))
+            # if neighbor in edge_path
+
         new_edge = frontier.get()[1] # Gets the Edge of the lowest Heuristic
-        start = new_edge.target
+        edge_path.append(new_edge)
+        cur_node = new_edge.target
+        
+        print(cur_node.get_id())
          
-        if goal(new_edge.target):
+        if goal(cur_node):
             cost = 0
             for x in edge_path:
                 cost += x.cost
-            return edge_path,cost, vis_count, expa_count # but return something more sensible
+            return edge_path, cost, vis_count, expa_count
         if frontier.empty():
             return [],0, vis_count, expa_count
 
-    
-    
-#     # ________not_A*_but_heuristic_guided_depth_first_search__________
-#     # depth first search (through recursion) prioritised through heu_list
-#     # We start with lowest expense and expand from there  heu_list = [(expense1, neighbor1), (expense2, neighbor2) ,...]
-#     for i, expand in enumerate(sorted(heu_list)):
-        
-# #       i counting for this recursion depth how many nodes were expanded (node[3])
-#         if goal(expand[1].target):
-#             value = frontier, expand[1].cost, i, 0 # TODO: return something more sensible
-#             frontier = PriorityQueue() # reseting frontier
-#             return value
-        
-#         astar_tup = astar(expand[1].target, heuristic, goal)
 
-# #  TODO: Recursively add up edge costs (node[1])
-# #        Keep track of total calls of astar() (with decorator pattern?) (node[2])
-            
-#     return [],0,0,0
 
 def print_path(result):
     (path,cost,visited_cnt,expanded_cnt) = result
@@ -107,8 +97,6 @@ def main():
     def atgoal(n):
         return n.get_id() == target
     
-    print(atgoal(graph.Austria["Bregenz"]))
-    print(graph.Austria)
     result = astar(graph.Austria["Eisenstadt"], atheuristic, atgoal)
     print_path(result)
     
