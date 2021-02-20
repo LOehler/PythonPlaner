@@ -35,7 +35,7 @@ def astar(start, heuristic, goal):
     # initiating
     # to return
     path = []  # represented as a sequence of Edge objects
-    distance = 0  # total length of the path
+    distance_from_start = 0  # total length of the path
     visited = 0 # number of nodes visited, i.e. added to the frontier, during search
     expanded = 0 #  number of nodes expanded, i.e. removed from the frontier, during search
 
@@ -54,14 +54,19 @@ def astar(start, heuristic, goal):
 
         # check: is neighbor already in search tree
 
+
+
         # ADD neighbors of cur_node to heap
         for neighbor in cur_node.get_neighbors():  # get_neighbors() = list with graph.Edge
-            heapq.heappush(agenda_h, ((heuristic(neighbor.target, neighbor) + cost_dist(neighbor)),neighbor))  # add ALL to heap (need to be able to use neighbors later)
+
+          #   heapq.heappush(agenda_h, ((heuristic(neighbor.target, neighbor) + cost_dist(neighbor, 0)),neighbor)) # distance of prev nodes has np effect
+            heapq.heappush(agenda_h, ((heuristic(neighbor.target, neighbor) + cost_dist(neighbor, distance_from_start)),neighbor))  # add ALL to heap (need to be able to use neighbors later)
            # frontier.put(score(neighbor), neighbor)
 
         #print("agenda_h", agenda_h)
        # show_tree(agenda_h)
         # node is visited iff its neighbors have been added to heap
+
 
         # update cur_node
         cur_edge = heapq.heappop(agenda_h)
@@ -70,6 +75,10 @@ def astar(start, heuristic, goal):
         cur_node = cur_edge[1].target
        # print("cur_node", cur_node)
       #  print("cur_node[1]", cur_node[1])
+
+        # add distance from visited node
+        distance_from_start += cur_edge[1].cost
+        print("distance_from_start", distance_from_start)
 
         # calc a* score of neighbors
       #  score(cur_node.get_neighbors())
@@ -80,6 +89,7 @@ def astar(start, heuristic, goal):
 
        # cur_node = heapq.heappop(agenda_h)
 
+
         # Found the goal
         if(goal(cur_node)):
             rewind_path = []
@@ -88,10 +98,13 @@ def astar(start, heuristic, goal):
             while (agenda_h != []): # as long as heap is not empty
                 print("current", current[1].name)
                 rewind_path.append(current[1].name)
-                current = heapq.heappop(agenda_h)
+                current = heapq.heappop(agenda_h) # get parent bro i will legit make a new obj just so i can use get_parent dont @ me
+                
 
             return rewind_path[::-1]
            # path = rewind_path[::-1]  # Return reversed path
+
+
 
 
 
@@ -114,13 +127,13 @@ def astar(start, heuristic, goal):
 
 
 # a* score = cost of path [start, cur_node] + estimated distance to goal (heuristic)
-def cost_dist(edge): # edge obj not node obj
+def cost_dist(edge, distance_from_start): # edge obj not node obj
 
     # get distance
 
     # need path here
    # + node_cost
-    distance = 0
+    distance = distance_from_start #
     distance += edge.cost # cost of self
     # TODO: add cost of prev edges
 
