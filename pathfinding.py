@@ -186,7 +186,7 @@ def main():
     result = astar(graph.Austria["Eisenstadt"], atheuristic, atgoal)
     print("did i make it here")
     print("result", result)
-    print_path(result)
+   # print_path(result)
     #
     # result = astar(graph.Austria["Eisenstadt"], default_heuristic, atgoal)
     # print_path(result)
