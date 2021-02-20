@@ -1,4 +1,8 @@
-import graph
+import graph, heapq
+import queue
+
+
+
 
 def default_heuristic(n, edge):
     """
@@ -26,7 +30,121 @@ def astar(start, heuristic, goal):
         - visited is the total number of nodes that were added to the frontier during the execution of the algorithm 
         - expanded is the total number of nodes that were expanded (i.e. whose neighbors were added to the frontier)
     """
-    return [],0,0,0
+
+
+    # initiating
+    # to return
+    path = []  # represented as a sequence of Edge objects
+    distance = 0  # total length of the path
+    visited = 0 # number of nodes visited, i.e. added to the frontier, during search
+    expanded = 0 #  number of nodes expanded, i.e. removed from the frontier, during search
+
+    # other
+    #search_space = []
+    search_tree = []
+    agenda_h = []  #  empty heap -> why heap? to get path by moving backwards (children to parent)
+    frontier = queue.PriorityQueue()  # decides which nodes gets extendet next by sorting after expected cost (cost + heuristic_cost)
+
+
+
+    cur_node = start
+
+    while(len(cur_node.get_neighbors()) != 0):
+    # termination rule (no node can be expanded?)
+
+        # check: is neighbor already in search tree
+
+        # ADD neighbors of cur_node to heap
+        for neighbor in cur_node.get_neighbors():  # get_neighbors() = list with graph.Edge
+            heapq.heappush(agenda_h, ((heuristic(neighbor.target, neighbor) + cost_dist(neighbor)),neighbor))  # add ALL to heap (need to be able to use neighbors later)
+           # frontier.put(score(neighbor), neighbor)
+
+        #print("agenda_h", agenda_h)
+       # show_tree(agenda_h)
+        # node is visited iff its neighbors have been added to heap
+
+        # update cur_node
+        cur_edge = heapq.heappop(agenda_h)
+       # cur_edge =agenda_h[0]
+
+        cur_node = cur_edge[1].target
+       # print("cur_node", cur_node)
+      #  print("cur_node[1]", cur_node[1])
+
+        # calc a* score of neighbors
+      #  score(cur_node.get_neighbors())
+
+
+        # use heapq.heappushpop(heap, item) ?
+
+
+       # cur_node = heapq.heappop(agenda_h)
+
+        # Found the goal
+        if(goal(cur_node)):
+            rewind_path = []
+            print(agenda_h)
+            current = cur_edge
+            while (agenda_h != []): # as long as heap is not empty
+                print("current", current[1].name)
+                rewind_path.append(current[1].name)
+                current = heapq.heappop(agenda_h)
+
+            return rewind_path[::-1]
+           # path = rewind_path[::-1]  # Return reversed path
+
+
+
+
+
+
+
+
+
+
+
+
+        #  If no path is found, the first two values should be None, but the number of visited and expanded nodes should still be reported.
+
+    print("test")
+
+
+   # return [],0,0,0
+    #return path, distance, visited, expanded
+
+
+# a* score = cost of path [start, cur_node] + estimated distance to goal (heuristic)
+def cost_dist(edge): # edge obj not node obj
+
+    # get distance
+
+    # need path here
+   # + node_cost
+    distance = 0
+    distance += edge.cost # cost of self
+    # TODO: add cost of prev edges
+
+
+    # calc heuristic
+    # estimated distance to goal NOTE: DO NOT OVERESTIMATE
+    #heuristic = 0
+    # default_heuristic()
+
+
+
+    # calc score
+  #  a_score = distance + heuristic()
+
+    # all costs are bound from below by a positive constant (maybe del)
+   # if(a_score > 0):
+    #    return a_score
+
+   # else:
+   #     return 0
+    return distance
+
+
+
 
 def print_path(result):
     (path,cost,visited_cnt,expanded_cnt) = result
@@ -38,6 +156,8 @@ def print_path(result):
     else:
         print("No path found")
     print("\n")
+
+# test
 
 def main():
     """
@@ -58,36 +178,41 @@ def main():
         return graph.AustriaHeuristic[target][n.get_id()]
     def atgoal(n):
         return n.get_id() == target
+
+    # print for debug
+    print(atgoal(graph.Austria["Bregenz"]))
+    #print("graph", graph.Austria)
     
     result = astar(graph.Austria["Eisenstadt"], atheuristic, atgoal)
+    print("did i make it here")
+    print("result", result)
     print_path(result)
-    
-    result = astar(graph.Austria["Eisenstadt"], default_heuristic, atgoal)
-    print_path(result)
-    
-    target = 2050
-    def infheuristic(n, edge):
-        return abs(n.get_id() - target)
-    def infgoal(n):
-        return n.get_id() == target
-    
-    result = astar(graph.InfNode(1), infheuristic, infgoal)
-    print_path(result)
-    
-    result = astar(graph.InfNode(1), default_heuristic, infgoal)
-    print_path(result)
-    
-    def multiheuristic(n, edge):
-        return abs(n.get_id()%123 - 63)
-    def multigoal(n):
-        return n.get_id() > 1000 and n.get_id()%123 == 63
-    
-    result = astar(graph.InfNode(1), infheuristic, multigoal)
-    print_path(result)
-    
-    result = astar(graph.InfNode(1), default_heuristic, multigoal)
-    print_path(result)
-    
+    #
+    # result = astar(graph.Austria["Eisenstadt"], default_heuristic, atgoal)
+    # print_path(result)
+    #
+    # target = 2050
+    # def infheuristic(n, edge):
+    #     return abs(n.get_id() - target)
+    # def infgoal(n):
+    #     return n.get_id() == target
+    #
+    # result = astar(graph.InfNode(1), infheuristic, infgoal)
+    # print_path(result)
+    #
+    # result = astar(graph.InfNode(1), default_heuristic, infgoal)
+    # print_path(result)
+    #
+    # def multiheuristic(n, edge):
+    #     return abs(n.get_id()%123 - 63)
+    # def multigoal(n):
+    #     return n.get_id() > 1000 and n.get_id()%123 == 63
+    #
+    # result = astar(graph.InfNode(1), infheuristic, multigoal)
+    # print_path(result)
+    #
+    # result = astar(graph.InfNode(1), default_heuristic, multigoal)
+    # print_path(result)
 
 if __name__ == "__main__":
     main()
