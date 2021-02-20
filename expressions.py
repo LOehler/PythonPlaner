@@ -1,4 +1,4 @@
-OPERATORS = ['and', 'or', 'not', '=', 'imply', 'when', 'exists', 'forall']
+OPERATORS = ['and', 'or', 'not', '=', 'imply', 'when', 'exists', 'forall'] 
 
 class Expression:
     def __init__(self, string):
