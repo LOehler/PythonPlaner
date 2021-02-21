@@ -6,7 +6,7 @@ def default_heuristic(n, edge):
     Default heuristic for A*. Do not change, rename or remove!
     """
     return 0
-
+    
 def astar(start, heuristic, goal):
     """
     A* search algorithm. The function is passed a start (graph.Node) object, a heuristic function, and a goal predicate.
@@ -45,7 +45,7 @@ def astar(start, heuristic, goal):
         
             new_cost = neighbor.cost + cost_so_far[cur_node.get_id()]
             if neighbor.target.get_id() not in cost_so_far or new_cost < cost_so_far[neighbor.target.get_id()]:
-                vis_count += 1 # Inkrementing visited nodes
+                vis_count += 1 # incrementing visited nodes
                 cost_so_far[neighbor.target.get_id()] = new_cost # updating cost_so_far with better neighbor
                 frontier.put((heuristic(cur_node, neighbor) + neighbor.cost, neighbor)) # calculate heuristic and put it on sorted stack
                 came_from[neighbor.target.get_id()] = cur_node # set parrent (for retracing the path)
@@ -109,17 +109,17 @@ def main():
     result = astar(graph.Austria["Eisenstadt"], default_heuristic, atgoal)
     print_path(result)
     
-#     target = 2050
-#     def infheuristic(n, edge):
-#         return abs(n.get_id() - target)
-#     def infgoal(n):
-#         return n.get_id() == target
+    target = 2050
+    def infheuristic(n, edge):
+        return abs(n.get_id() - target)
+    def infgoal(n):
+        return n.get_id() == target
     
-#     result = astar(graph.InfNode(1), infheuristic, infgoal)
-#     print_path(result)
+    result = astar(graph.InfNode(1), infheuristic, infgoal)
+    print_path(result)
     
-#     result = astar(graph.InfNode(1), default_heuristic, infgoal)
-#     print_path(result)
+    result = astar(graph.InfNode(1), default_heuristic, infgoal)
+    print_path(result)
     
 #     def multiheuristic(n, edge):
 #         return abs(n.get_id()%123 - 63)
