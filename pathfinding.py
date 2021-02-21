@@ -47,11 +47,13 @@ def astar(start, heuristic, goal):
             if neighbor.target.get_id() not in cost_so_far or new_cost < cost_so_far[neighbor.target.get_id()]:
                 vis_count += 1 # incrementing visited nodes
                 cost_so_far[neighbor.target.get_id()] = new_cost # updating cost_so_far with better neighbor
-                frontier.put((heuristic(cur_node, neighbor) + neighbor.cost, neighbor)) # calculate heuristic and put it on sorted stack
+                # calculate heuristic and put it on sorted stack
+                frontier.put((heuristic(cur_node, neighbor) + neighbor.cost, vis_count, neighbor)) # vis_count only in there to avoid neighbor
+                                                                                                   # comparison (ask for more detailed explenation!)
                 came_from[neighbor.target.get_id()] = cur_node # set parrent (for retracing the path)
 
 
-        new_edge = frontier.get()[1] # Gets the Edge of the lowest Heuristic
+        new_edge = frontier.get()[2] # Gets the Edge of the lowest Heuristic
         cur_node = new_edge.target
          
         if goal(cur_node):
@@ -121,16 +123,16 @@ def main():
     result = astar(graph.InfNode(1), default_heuristic, infgoal)
     print_path(result)
     
-#     def multiheuristic(n, edge):
-#         return abs(n.get_id()%123 - 63)
-#     def multigoal(n):
-#         return n.get_id() > 1000 and n.get_id()%123 == 63
+    def multiheuristic(n, edge):
+        return abs(n.get_id()%123 - 63)
+    def multigoal(n):
+        return n.get_id() > 1000 and n.get_id()%123 == 63
     
-#     result = astar(graph.InfNode(1), infheuristic, multigoal)
-#     print_path(result)
+    result = astar(graph.InfNode(1), infheuristic, multigoal)
+    print_path(result)
     
-#     result = astar(graph.InfNode(1), default_heuristic, multigoal)
-#     print_path(result)
+    result = astar(graph.InfNode(1), default_heuristic, multigoal)
+    print_path(result)
     
 
 if __name__ == "__main__":
