@@ -31,36 +31,42 @@ def astar(start, heuristic, goal):
     frontier = PriorityQueue() # decides which nodes gets extendet next by sorting after expected cost (cost + heuristic_cost)
     expa_count = 0 # counts how many nodes have been expanded
     vis_count = 0 # counts how many nodes have been visited (not actually visited but looked at the edges of them)
-    edge_path = [] # the path to be returned
+    cost_so_far = {start.get_id():0} # The cost from the curent node (start node has cost 0)
+    came_from = {} # parent relation
     cur_node = start # for better readability
 
     while True: # Runs until goal is found or frontier is empty
         
         expa_count += 1
-        vis_count += len(cur_node.get_neighbors())
         # getting all neighbors and adding it to PriorityQueue
         for neighbor in cur_node.get_neighbors(): # get_neighbors() = list with graph.Edge
         # looking for best heuristic in all neighbors
         # A* adds to the cost for the next neighbor a heuristic to improve search
         
-        # TODO:
-            # if not neighbor in frontier:
-            # if shorter_path found:
-                # update frontier
-            frontier.put((heuristic(cur_node, neighbor) + neighbor.cost, neighbor))
-            # if neighbor in edge_path
+            new_cost = neighbor.cost + cost_so_far[cur_node.get_id()]
+            if neighbor.target.get_id() not in cost_so_far or new_cost < cost_so_far[neighbor.target.get_id()]:
+                vis_count += 1 # Inkrementing visited nodes
+                cost_so_far[neighbor.target.get_id()] = new_cost # updating cost_so_far with better neighbor
+                frontier.put((heuristic(cur_node, neighbor) + neighbor.cost, neighbor)) # calculate heuristic and put it on sorted stack
+                came_from[neighbor.target.get_id()] = cur_node # set parrent (for retracing the path)
+
 
         new_edge = frontier.get()[1] # Gets the Edge of the lowest Heuristic
-        edge_path.append(new_edge)
         cur_node = new_edge.target
-        
-        print(cur_node.get_id())
          
         if goal(cur_node):
             cost = 0
-            for x in edge_path:
-                cost += x.cost
-            return edge_path, cost, vis_count, expa_count
+            edge_path = []
+            while cur_node != start:
+                # Getting edges out of node
+                for x in came_from[cur_node.get_id()].get_neighbors():
+                    if x.target == cur_node:
+                        prev_edge = x
+                # Adding up cost and a list of edges
+                cost += prev_edge.cost
+                edge_path.append(prev_edge)
+                cur_node = came_from[cur_node.get_id()]
+            return edge_path[::-1], cost, vis_count, expa_count
         if frontier.empty():
             return [],0, vis_count, expa_count
 
