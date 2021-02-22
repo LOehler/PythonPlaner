@@ -21,6 +21,14 @@ def plan(domain, problem, useheuristic=True):
        - visited is the total number of nodes that were added to the frontier during the execution of the algorithm 
        - expanded is the total number of nodes that were expanded (i.e. whose neighbors were added to the frontier)
     """
+#     if useheuristic:
+#         pass
+#     #else:
+#     define neighborhood for each node as actions from domain that are possible (from each node) = graph
+#     run and return A* on the constructed graph
+        
+    
+    
     def heuristic(state, action):
         return pathfinding.default_heuristic
         
