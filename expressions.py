@@ -150,11 +150,11 @@ def models(world, expression):
             return False
         return True
 
-    elif expression.name == 'exists':
-        for value in world.sets[expression.children[0].children[1].string]:
-            if models(world, Expression(substitute(expression.children[1], expression.children[0].string[0], value))):
-                return True
-        return False
+#     elif expression.name == 'exists':
+#         for value in world.sets[expression.children[0].children[1].string]:
+#             if models(world, Expression(substitute(expression.children[1], expression.children[0].string[0], value))):
+#                 return True
+#         return False
         
     elif expression.name == 'forall':
         for value in world.sets[expression.children[0].children[1].string]:
@@ -176,7 +176,7 @@ def substitute(expression, variable, value):
     # return deep copy with all variables replaced
     if expression.name[0] == '?':
         return expression.string
-    elif not expression.name in OPERATORS or expression.name == '=': # abit inelegant and on the nose
+    elif not expression.name in OPERATORS or expression.name == '=':
         new_list = []
         for exp in expression.string:
             if exp == variable:
@@ -229,33 +229,12 @@ if __name__ == "__main__":
     
     print("Should be False: ", end="")
     print(models(apply(world, change), exp))
-    
-    # ______own_test_case_____________
-    print("Test when")
-    
-    exp2 = make_expression(("when", ("on", "a", "b"), ("not", ("on", "a", "b"))))    
-    world2 = make_world([("on", "a", "b"), ("on", "b", "c"), ("on", "c", "d")], {})
-    applied = apply(world2, exp2)
-    print("is true ", models(world2, make_expression(("on", "a", "b"))))
-    print("is false ", models(applied, make_expression(("on", "a", "b"))))
-    
-    print("Test imply")
-    
-    exp3 = make_expression(("imply", ("on", "a", "b"), ("not", ("on", "a", "b"))))
-    exp4 = make_expression(("imply", ("on", "a", "b"), ("on", "c", "d")))  
-    world3 = make_world([("on", "a", "b"), ("on", "b", "c"), ("on", "c", "d")], {})
-    print("is false ", models(world3, exp3))
-    print("is true ", models(world3, exp4))
-    
-    # ____end_own_test_case___________
-    
 
-    
     
     
     # _____Mickey_Example____________
     
-    print("\nmickey/minny example")
+    print("mickey/minny example")
     world = make_world([("at", "store", "mickey"), ("at", "airport", "minny")], {"Locations": ["home", "park", "store", "airport", "theater"], "": ["home", "park", "store", "airport", "theater", "mickey", "minny"]})
     exp = make_expression(("and", 
         ("not", ("at", "park", "mickey")), 
@@ -297,12 +276,12 @@ if __name__ == "__main__":
                                         ("at", "home", "minny"),
                                         ("not", ("at", "store", "minny"))))))
 
-    print("mickey with minny at home")
+    # print("mickey with minny at home")
     print("Should be True: ", end="")
     print(models(apply(movedworld, move_both_cond), exp))
 
 
-    print('minny still at airport (mickey is a bad friend)')
+    # print('minny still at airport (mickey is a bad friend)')
     print("Should be False: ", end="")
     another_world = apply(friendsworld, move_both_cond)
     print(models(another_world, exp))
