@@ -37,8 +37,23 @@ def astar(start, heuristic, goal):
 
     while True: # Runs until goal is found or frontier is empty
         
+        if goal(cur_node):
+            cost = 0
+            edge_path = []
+            while cur_node != start:
+                # Getting edges out of node
+                for x in came_from[cur_node.get_id()].get_neighbors():
+                    if x.target == cur_node:
+                        prev_edge = x
+                # Adding up cost and a list of edges
+                cost += prev_edge.cost
+                edge_path.append(prev_edge)
+                cur_node = came_from[cur_node.get_id()]
+            return edge_path[::-1], cost, vis_count, expa_count
+        
         expa_count += 1
         # getting all neighbors and adding it to PriorityQueue
+        
         for neighbor in cur_node.get_neighbors(): # get_neighbors() = list with graph.Edge
         # looking for best heuristic in all neighbors
         # A* adds to the cost for the next neighbor a heuristic to improve search
@@ -56,19 +71,6 @@ def astar(start, heuristic, goal):
         new_edge = frontier.get()[2] # Gets the Edge of the lowest Heuristic
         cur_node = new_edge.target
          
-        if goal(cur_node):
-            cost = 0
-            edge_path = []
-            while cur_node != start:
-                # Getting edges out of node
-                for x in came_from[cur_node.get_id()].get_neighbors():
-                    if x.target == cur_node:
-                        prev_edge = x
-                # Adding up cost and a list of edges
-                cost += prev_edge.cost
-                edge_path.append(prev_edge)
-                cur_node = came_from[cur_node.get_id()]
-            return edge_path[::-1], cost, vis_count, expa_count
         if frontier.empty():
             return [],0, vis_count, expa_count
 
