@@ -52,8 +52,8 @@ def astar(start, heuristic, goal):
             return edge_path[::-1], cost, vis_count, expa_count
         
         expa_count += 1
-        # getting all neighbors and adding it to PriorityQueue
         
+        # getting all neighbors and adding it to PriorityQueue       
         for neighbor in cur_node.get_neighbors(): # get_neighbors() = list with graph.Edge
         # looking for best heuristic in all neighbors
         # A* adds to the cost for the next neighbor a heuristic to improve search
@@ -64,7 +64,7 @@ def astar(start, heuristic, goal):
                 cost_so_far[neighbor.target.get_id()] = new_cost # updating cost_so_far with better neighbor
                 # calculate heuristic and put it on sorted stack
                 frontier.put((heuristic(cur_node, neighbor) + neighbor.cost, vis_count, neighbor)) # vis_count only in there to avoid neighbor
-                                                                                                   # comparison (ask for more detailed explenation!)
+                                                                                                   # comparison (ask for more detailed explanation!)
                 came_from[neighbor.target.get_id()] = cur_node # set parrent (for retracing the path)
 
 
