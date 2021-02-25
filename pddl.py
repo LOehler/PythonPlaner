@@ -12,6 +12,10 @@ def parse_domain(fname):
     Parses a PDDL domain file contained in the file fname
     
     The return value of this function is passed to planner.plan, and does not have to follow any particular format
+
+    Hint: it is recommended to return a list of an action schemata representation, a dictionary mapping types to sets of
+    constants for each type, and the type hierarchy information. Take care to include an extra mapping from the type ""
+    to a set of all objects.
     """
     return None 
     
@@ -20,6 +24,10 @@ def parse_problem(fname):
     Parses a PDDL problem file contained in the file fname
     
     The return value of this function is passed to planner.plan, and does not have to follow any particular format
+
+    Hint: it is recommend to return a dictionary mapping types to sets of objects for each type (same as for the domain),
+    a list of atoms representing the initial state, and an expression object (perhaps obtained with expressions.make_expression)
+    representing the goal.
     """
 
     domain = parser(fname)[0]  # ignore define
