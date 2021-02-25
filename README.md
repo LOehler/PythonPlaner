@@ -9,25 +9,33 @@ A file which provides functionality to make worlds and expressions from syntax t
  
 ## graph.py
 A file defining a "lazy" representation of an graph (by only representing the neighbors of each node)
-  \n\tThis file has already been provided
+
+This file has already been provided
   
 ## pathfinding.py
 A file that implements A* which traverses the graph provided by Graph.py
-  \n\tA* seems to could perform better (based on Terminal output of Teacher), meaning less nodes extensions and visits
-	\n\tPossible explanation: (visited is supposed to only count the first time when node is explored (not when its reevaluated))
-  \n\tUnrelated: if a path with lower cost of an existing node is found, this node is added to frontier *again* instead of being replaced
+
+A* seems to could perform better (based on Terminal output of Teacher), meaning less nodes extensions and visits
+
+Possible explanation: (visited is supposed to only count the first time when node is explored (not when its reevaluated))
+    
+    
+Unrelated: if a path with lower cost of an existing node is found, this node is added to frontier *again* instead of being replaced
   
 ## .pddl
 Files expressing a problem domain and the problem itself (wumpus problem) which serves testing purposes
 
 ## pddl.py
 A file that parses pddl domains and problems to be used in planner
-  \n\tIN DEVELOPEMENT
+
+IN DEVELOPEMENT
   
 ## planner.py
 A file that uses A* implemented in pathfinding on the expressions created by pddl.py and expressions.py
-  \n\tIN DEVELOPEMENT
+
+IN DEVELOPEMENT
 
 ## runall.py
 Given an directory with at least pddl domain and problem it will run all pddl problems (with heuristic on)
-  \n\tThis file has already been provided
+
+This file has already been provided
