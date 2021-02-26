@@ -83,7 +83,7 @@ def tokenize(filename):
             elif ch == ")":
                 str2 = str1.replace(")", " ) ")
 
-        #print("str", str2)
+        print("str", str2)
 
         str_splitted = str2.split()
         #print("str_splitted", str_splitted)
@@ -123,8 +123,11 @@ def tokenize(filename):
 
     return nested_list
 
-tokenize("domain.pddl")
-print(tokenize("domain.pddl"))
+
+
+#tokens = tokenize("domain.pddl")
+tokens = tokenize("type_hierarchy_test.pddl")
+print(tokens)
 
 
 
@@ -133,6 +136,7 @@ print(tokenize("domain.pddl"))
 def assign_types(list_tokens):
 
     # create dict
+    # make keys
     for sub_list in list_tokens:
         if sub_list[0] == ":types":  # didnt clean list yet so idk where :types is and have to iterate over nested_list
             # both of the following work:
@@ -142,18 +146,21 @@ def assign_types(list_tokens):
     dict_types[""] = ()  # if no dash
 
 
-
+    # fill lists
     # example: sub_list[0] == ":constants" to test if assign types work
     stack = []
     i = 0
     for sub_list in list_tokens:
-        if sub_list[0] == ":constants": # TODO Iterate over all sublists (?)
+        # Q: what do i have to iterate over
+        # wumpus:
+        if sub_list[0] == ":types":  # TODO Iterate over all sublists (?)
             sub_list = sub_list[1:]
 
             for char in sub_list:
               #  print("sub_list for loop", sub_list)
                 if char != '-':
                     if sub_list[i-1] == '-':  # check if char == key and skip
+                   # if char == key:
                         i += 1
                         #continue
                     else:
@@ -162,6 +169,7 @@ def assign_types(list_tokens):
                    # print("stack", stack)
                 if char == '-':
                   #  print("key", sub_list[i+1])  # key
+                  #  key = sub_list[i+1]
                     dict_types[sub_list[i+1]] = stack
                    # print("stack", stack)
                     stack = [] # reset
@@ -174,5 +182,79 @@ def assign_types(list_tokens):
     return(dict_types)
 
 
-assign_types(tokenize("domain.pddl"))
-print(assign_types(tokenize("domain.pddl")))
+assign_types(tokens)
+print(assign_types(tokens))
+
+
+
+
+
+list_tokens = tokens
+#def create_type_hierachy():
+# create dict
+    # make keys
+for sub_list in list_tokens:
+    if sub_list[0] == ":types":  # didnt clean list yet so idk where :types is and have to iterate over nested_list
+        # both of the following work:
+        dict_types = {i: () for i in sub_list[1:]}
+        #dict_types = dict.fromkeys(sub_list[1:], ())
+
+dict_types[""] = ()  # if no dash
+
+
+# fill lists
+# example: sub_list[0] == ":constants" to test if assign types work
+stack = []
+i = 0
+for sub_list in list_tokens:
+    # Q: what do i have to iterate over
+    # wumpus:
+    if sub_list[0] == ":types":  # TODO Iterate over all sublists (?)
+        sub_list = sub_list[1:]
+
+        for char in sub_list:
+          #  print("sub_list for loop", sub_list)
+            if char != '-':
+                if sub_list[i-1] == '-':  # check if char == key and skip
+                    i += 1
+                    #continue
+                else:
+                    stack.append(char)
+                    i += 1
+               # print("stack", stack)
+            if char == '-':
+              #  print("key", sub_list[i+1])  # key
+                dict_types[sub_list[i+1]] = stack
+               # print("stack", stack)
+                stack = [] # reset
+                i += 1
+
+        if "-" not in sub_list:
+            dict_types[""] = sub_list
+
+#print("dict_types", dict_types)
+#return(dict_types)
+
+print("dict_types", dict_types)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
