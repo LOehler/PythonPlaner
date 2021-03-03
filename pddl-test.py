@@ -59,7 +59,7 @@ Take care to include an extra mapping from the type "" to a set of all objects. 
 # copy paste:
 # https://github.com/pucrs-automated-planning/pddl-parser/blob/master/PDDL.py
 
-# TODO func tokenize
+
 #  filename = "domain.pddl"
 def tokenize(filename):
 
@@ -130,112 +130,100 @@ tokens = tokenize("type_hierarchy_test.pddl")
 print(tokens)
 
 
-
-# TODO func assign types
-
+# TODO split in multiple functions for readability
 def assign_types(list_tokens):
 
     # create dict
     # make keys
     for sub_list in list_tokens:
-        if sub_list[0] == ":types":  # didnt clean list yet so idk where :types is and have to iterate over nested_list
+        if sub_list[0] == ":types":  # didnt clean list yet so idk where :types is and have to iterate over nested_list -> could be prettier?
             # both of the following work:
-            dict_types = {i: () for i in sub_list[1:]}
-            #dict_types = dict.fromkeys(sub_list[1:], ())
+            # dict_types = {i: [] for i in sub_list[1:] }#and i != "-"}
+            dict_types = dict.fromkeys(sub_list[1:], [])
 
-    dict_types[""] = ()  # if no dash
+            # TODO
+            # cur problem: "-" is in dict bc it is in types
+            # cannot delete dash bc we need it for hierarchy
+            # just letting it in for now
 
+
+    dict_types[""] = []  # if no dash
 
     # fill lists
     # example: sub_list[0] == ":constants" to test if assign types work
-    stack = []
-    i = 0
-    for sub_list in list_tokens:
-        # Q: what do i have to iterate over
-        # wumpus:
-        if sub_list[0] == ":types":  # TODO Iterate over all sublists (?)
-            sub_list = sub_list[1:]
 
-            for char in sub_list:
-              #  print("sub_list for loop", sub_list)
-                if char != '-':
-                    if sub_list[i-1] == '-':  # check if char == key and skip
-                   # if char == key:
-                        i += 1
-                        #continue
-                    else:
-                        stack.append(char)
-                        i += 1
-                   # print("stack", stack)
-                if char == '-':
-                  #  print("key", sub_list[i+1])  # key
-                  #  key = sub_list[i+1]
-                    dict_types[sub_list[i+1]] = stack
-                   # print("stack", stack)
-                    stack = [] # reset
-                    i += 1
+    print(list_tokens[2:])
+    for sub_list in list_tokens[2:]:  # cut off ['define', ['domain', 'test-adl']
 
-            if "-" not in sub_list:
-                dict_types[""] = sub_list
-
-    #print("dict_types", dict_types)
-    return(dict_types)
-
-
-assign_types(tokens)
-print(assign_types(tokens))
-
-
-
-
-
-list_tokens = tokens
-#def create_type_hierachy():
-# create dict
-    # make keys
-for sub_list in list_tokens:
-    if sub_list[0] == ":types":  # didnt clean list yet so idk where :types is and have to iterate over nested_list
-        # both of the following work:
-        dict_types = {i: () for i in sub_list[1:]}
-        #dict_types = dict.fromkeys(sub_list[1:], ())
-
-dict_types[""] = ()  # if no dash
-
-
-# fill lists
-# example: sub_list[0] == ":constants" to test if assign types work
-stack = []
-i = 0
-for sub_list in list_tokens:
-    # Q: what do i have to iterate over
-    # wumpus:
-    if sub_list[0] == ":types":  # TODO Iterate over all sublists (?)
+        # if sub_list[0] == ":types":
         sub_list = sub_list[1:]
+        print("sub_list", sub_list)
+        i = 0  # reset for each sublist
+        stack = []
 
         for char in sub_list:
-          #  print("sub_list for loop", sub_list)
+            #  print("sub_list for loop", sub_list)
             if char != '-':
-                if sub_list[i-1] == '-':  # check if char == key and skip
+                if sub_list[i - 1] == '-':  # check if char == key and skip
                     i += 1
-                    #continue
+                    # continue
                 else:
                     stack.append(char)
                     i += 1
-               # print("stack", stack)
+            # print("stack", stack)
             if char == '-':
-              #  print("key", sub_list[i+1])  # key
-                dict_types[sub_list[i+1]] = stack
-               # print("stack", stack)
-                stack = [] # reset
+                #  print("key", sub_list[i+1])  # = key
+                if dict_types[sub_list[i + 1]]:  # list not empty -> key already has entries
+                    dict_types[sub_list[i + 1]].append(  # append not overwrite
+                        stack[0])  # stack[0] to get rid of nested list
+                else:
+                    dict_types[sub_list[i + 1]] = stack
+                print("stack", stack)
+                stack = []  # reset
                 i += 1
 
-        if "-" not in sub_list:
+        # check if key is entry of other key
+        # = if key is a subtype
+        # then copy all entries of subtype to other key
+        for key_i in dict_types:
+            for key_j in dict_types:
+                if key_i in dict_types[key_j] and dict_types[key_i]:  # if key_i is a subtype AND already has entries
+                    print("key_i", key_i)
+                    print("key_j", key_j)
+
+                    list_to_copy = dict_types[key_i]  # copy entries of subtype
+                    print("list to copy", list_to_copy)
+
+                    # add to key_i
+                    for item in list_to_copy:
+                        dict_types[key_j].append(item)  # works
+
+                    #  dict_types[key_j].append(list_to_copy)  # would work too but nested lists
+                    continue
+                else:
+                    continue
+
+        # no type assigned
+        if "-" not in sub_list and sub_list[0] == ":types":
             dict_types[""] = sub_list
 
-#print("dict_types", dict_types)
-#return(dict_types)
+        # TODO fix duplicates in list (entries of keys)
+    # idea 1: change lists to sets
+    # idea 2: use sets from beginning
 
-print("dict_types", dict_types)
+    # print("dict_types", dict_types)
+    # return(dict_types)
+
+    print("dict_types", dict_types)
+
+
+assign_types(tokens)
+#print(assign_types(tokens))
+
+
+
+
+
 
 
 

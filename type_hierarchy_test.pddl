@@ -11,7 +11,7 @@
         physobj - object)
 
     (:test
-        t1 - vehicle
+        v1 - vehicle
         t2 - truck)
 
 
