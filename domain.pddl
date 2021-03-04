@@ -2,7 +2,7 @@
   (:requirements :adl :typing)
 
   ;; object types
-  (:types agent - person wumpus - person gold arrow - person square)
+  (:types agent - person wumpus - person gold arrow square)
   
   (:constants the-gold - gold
               the-arrow - arrow)

@@ -5,7 +5,7 @@ This is the Project for the Methods of AI Seminar in which we were tasked to pro
 
 ## expressions.py
 A file which provides functionality to make worlds and expressions from syntax trees (created in pddl.py)\
-While the code might be not overly object oriented (for new operators no new class has to be implemented but the behavior of the functions and in ```Expression()``` ```apply_self_on()```, one can still consider it elegant code. ;)
+The code might be not overly object oriented (for new operators no new class has to be implemented but the behavior of the functions and in ```Expression()``` ```apply_self_on()```. (Slow string comparisons add up when using same expression several times)
  
 ## graph.py
 A file defining a "lazy" representation of an graph (by only representing the neighbors of each node)

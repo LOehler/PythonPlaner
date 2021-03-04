@@ -38,7 +38,7 @@ def type_to_object(list):
     dict = {"" : []}
     # c1 c2 ... cN - type  has to become type_to_constant[type] = [c1, c2, ... cN]
     l = [] # list supposed to be returned with key in Type_to_constant
-    for i, x in enumerate(list):
+    for i, x in enumerate(list): # For each element after "-" put previous elements as list in dict 
         if x == "-":
             dict[list[i+1]] = l
             dict[""] += l
@@ -48,6 +48,25 @@ def type_to_object(list):
         else:
             l.append(x)
     return dict
+
+def make_dic(list):
+    
+    #  ?A1 ?A2 ... ?AN - PREDICATE_1_NAME  has to become type_hierachy[PREDICTE_1_NAME] = [?A1 ?A2 ... ?AN]
+    dic = {}
+    l = [] # list supposed to be returned with key in type_hierachy
+    for x in list:
+        if x[0] == "?":
+            l.append(x)
+        elif x == "-":
+            continue
+        else:
+            if x in dic:
+                dic[x] += l
+            else:
+                dic[x] = l
+            l = []
+    dic[""] = l # rest of list
+    return dic
      
             
     
@@ -70,21 +89,17 @@ def parse_domain(fname):
     type_hierachy = {} # will be returned empty if :types is missing
     if domain[3][0] == ":types":
         # TYPE_NAME - SUBTYPE_NAME  has to become type_hierachy[TYPENAME_NAME] = SUBTYPE_NAME
-        for i, x in enumerate(domain[3][1:]):
+        for i, x in enumerate(domain[3][1:]): # Iterates through types and adds to the sub types to the type (key of type_hierachy)
             if x == "-":
                 if domain[3][i+2] in type_hierachy:
-                    l = [] # need to be a new list or dict would return none (for some reason)          
-                    for x in type_hierachy[domain[3][i+2]]:
-                        l.append(x)
-                    l.append(s)
-                    type_hierachy[domain[3][i+2]] = l
+                    type_hierachy[domain[3][i+2]] += [from_before]
                 else:
-                    type_hierachy[domain[3][i+2]] = [s]
+                    type_hierachy[domain[3][i+2]] = [from_before]
             elif domain[3][i] == "-": # not elegant but efficient. The key itself was already written in previous iteration
                 continue
             else:
                 type_hierachy[x] = []
-                s = x
+                from_before = x
     else:
         m_counter += 1
     
@@ -95,25 +110,21 @@ def parse_domain(fname):
         m_counter += 1
         
         
-    # ----------- works - so - far ---------------
-
-            
-    # Translating actions into when expressions (with every variable substitution from variable)?
-    act_sch = domain[5 - m_counter:] # for now just all the rest from the domain
-    # TODO fill action schemata more sensible
+    # -------  action schemata confusion   ------
     
-    # Leftover I might need here
-#             # PREDICATE_1_NAME ?A1 ?A2 ... ?AN  has to become type_hierachy[PREDICTE_1_NAME] = [?A1 ?A2 ... ?AN]
-#         l = [] # list supposed to be returned with key in type_hierachy
-#         s = domain[3][1] # the previous key
-#         for x in domain[3][1:]:
-#             if x[0] == "?":
-#                 l.append(x)
-#             else:
-#                 type_hierachy[s] = l
-#                 s = x
-#                 l = []
-#         type_hierachy[""] = l # rest of list
+    predicates = domain[5 - m_counter] # what to do with predicates?
+    
+    # Translating actions into when expressions (with every variable substitution from variable)?
+    # or passing it like this:
+    act_sch = []
+    for action in domain[6 - m_counter:]:
+        parameter = make_dic(action[3])  # This should work in a well formed domain. But should I check if action[2] = ":parameters"
+        precondition = expressions.make_expression(action[5])
+        effect = expressions.make_expression(action[7])
+#         precondition = action[5]
+#         effect = action[7]
+        act_sch.append((parameter, precondition, effect))
+
     
 # it is recommended to return a list of an action schemata representation, a dictionary mapping types to sets of constants for each type, and the type hierarchy information. Take care to include an extra mapping from the type "" to a set of all objects.
     return act_sch, type_to_constant, type_hierachy
@@ -126,8 +137,14 @@ def parse_problem(fname):
     """
     problem = parser(fname)
     
+    # Getting initial world atoms to be tuple (instead of lists)
+    tmp = problem[4][1:]
+    init = []
+    for x in tmp:
+        init.append(tuple(x))
+    
 # it is recommend to return a dictionary mapping types to sets of objects for each type (same as for the domain), a list of atoms representing the initial state, and an expression object (perhaps obtained with expressions.make_expression) representing the goal.
-    return type_to_object(problem[3][1:]), problem[4][1:], expressions.make_expression(problem[5][1:]) # objects, init, goal
+    return type_to_object(problem[3][1:]), init, expressions.make_expression(problem[5][1:]) # objects, init, goal
     
     
 if __name__ == "__main__":
