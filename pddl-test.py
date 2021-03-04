@@ -198,6 +198,8 @@ def assign_types(list_tokens):
                     for item in list_to_copy:
                         dict_types[key_j].append(item)  # works
 
+                    # delete subtype in entry
+
                     #  dict_types[key_j].append(list_to_copy)  # would work too but nested lists
                     continue
                 else:

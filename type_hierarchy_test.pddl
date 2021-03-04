@@ -12,7 +12,12 @@
 
     (:test
         v1 - vehicle
-        t2 - truck)
+        t2 - truck
+        paris - location
+        berlin  - city
+
+
+        )
 
 
 )
