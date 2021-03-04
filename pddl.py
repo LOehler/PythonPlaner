@@ -11,6 +11,32 @@ class NotSupported(Exception):
         self.message = message
 
 
+def test(domain):
+    m_counter = 0  # keeps track of how many sections in the domain are missing
+
+    type_hierarchy = {}  # will be returned empty if :types is missing
+    if domain[2][0] == ":types": # hardcoded here
+        # TYPE_NAME - SUBTYPE_NAME  has to become type_hierachy[TYPENAME_NAME] = SUBTYPE_NAME
+        for i, x in enumerate(
+                domain[3][1:]):  # Iterates through types and adds to the sub types to the type (key of type_hierachy)
+            if x == "-":
+                if domain[2][i + 2] in type_hierarchy:
+                    type_hierarchy[domain[2][i + 2]] += [from_before]
+                else:
+                    type_hierarchy[domain[2][i + 2]] = [from_before]
+            elif domain[2][
+                i] == "-":  # not elegant but efficient. The key itself was already written in previous iteration
+                continue
+            else:
+                type_hierarchy[x] = []
+                from_before = x
+    else:
+        m_counter += 1
+
+    return m_counter
+
+
+
 def parser(fname):
     stack = []
     str_file = ""
@@ -20,90 +46,68 @@ def parser(fname):
                             # Now it checks for all charackters in whole file (would be better if it checks just for the first one)
             str_file += line.lower() # PDDL is case sensitive
     file.close()
-    tockens = re.findall(r"([:|\?]?[\w+-?]+\w+|[(|)|-])", str_file) # getts all the occurences of the stuff we need
+    tokens = re.findall(r"([:|\?]?[\w+-?]+\w+|[(|)|-])", str_file) # getts all the occurences of the stuff we need
                         # translation of regular expression optionally ":" or "?" with arbitrarily many letters following it (word or number)
                         #                                    optionally followed by other words joined by "-"
                         #                                    or paranthesis or "-"
-    for tocken in tockens:
-        if tocken == ")": # Backtracing to last opening paranthesis from closing paranthesis and adding it to the stack again (as a sublist)
+    for token in tokens:
+        if token == ")": # Backtracing to last opening paranthesis from closing paranthesis and adding it to the stack again (as a sublist)
             l = [stack.pop()]
             while not l[-1] == "(":
                 l.append(stack.pop())
             l.pop() # removing "("
             stack.append(l[::-1])
         else:
-            stack.append(tocken)
+            stack.append(token)
     print("parser", stack[0])
     return stack[0] # stack has only one element
 
 
 # TODO split in multiple functions for readability
-def assign_types(list_tokens):
+def assign_types(sub_list):
 
     # create dict
     dict_types = {}
-    # make keys
-    for sub_list in list_tokens:
-        if sub_list[0] == ":types":  # didnt clean list yet so idk where :types is and have to iterate over nested_list -> could be prettier?
-            # both of the following work:
-            # dict_types = {i: [] for i in sub_list[1:] }#and i != "-"}
-            dict_types = dict.fromkeys(sub_list[1:], [])
 
-            # TODO
-            # cur problem: "-" is in dict bc it is in types
-            # cannot delete dash bc we need it for hierarchy
-            # just letting it in for now
+    dict_types[""] = []  # if no dash
 
 
-  #  dict_types[""] = []  # if no dash
+    i = 0  # reset for each sublist
+    stack = []
 
-    # fill lists
-    # example: sub_list[0] == ":constants" to test if assign types work
+    for char in sub_list:
+        #  print("sub_list for loop", sub_list)
+        if char != '-':
+            if sub_list[i - 1] == '-':  # check if char == key and skip
 
-    print(list_tokens[2:])
-    for sub_list in list_tokens[1:]:  # cut off [['domain', 'test-adl']
-
-        # if sub_list[0] == ":types":
-        sub_list = sub_list[1:]
-        print("sub_list", sub_list)
-        i = 0  # reset for each sublist
-        stack = []
-
-        for char in sub_list:
-            #  print("sub_list for loop", sub_list)
-            if char != '-':
-                if sub_list[i - 1] == '-':  # check if char == key and skip
-                    i += 1
-                    # continue
-                else:
-                    stack.append(char)
-                    i += 1
-            # print("stack", stack)
-            if char == '-':
-                #  print("key", sub_list[i+1])  # = key
-                if dict_types[sub_list[i + 1]]:  # list not empty -> key already has entries
-                    dict_types[sub_list[i + 1]].append(  # append not overwrite
-                        stack[0])  # stack[0] to get rid of nested list
-                else:
-                    dict_types[sub_list[i + 1]] = stack
-                print("stack", stack)
-                stack = []  # reset
                 i += 1
+                # continue
+            else:
+                stack.append(char)
+                i += 1
+        # print("stack", stack)
+        if char == '-':
+            print("key", sub_list[i+1])  # = key
+
+            dict_types[ sub_list[i+1]] = []
+            print("dict_types", dict_types)
+            if dict_types[sub_list[i + 1]]:  # list not empty -> key already has entries
+                dict_types[sub_list[i + 1]].append(  # append not overwrite
+                    stack[0])  # stack[0] to get rid of nested list
+            else:
+                dict_types[sub_list[i + 1]] = stack
+            print("stack", stack)
+            stack = []  # reset
+            i += 1
 
 
 
-        # no type assigned
-        if "-" not in sub_list and sub_list[0] == ":types":
-            dict_types[""] = sub_list
 
-        # TODO fix duplicates in list (entries of keys)
-    # idea 1: change lists to sets
-    # idea 2: use sets from beginning
 
-    # print("dict_types", dict_types)
-    # return(dict_types)
+        # no type assigned TODO ERROR HERE?
+      #  if "-" not in sub_list and sub_list[0] == ":types":
+       #     dict_types[""] = sub_list
 
-   # print("assign types", dict_types)
     return dict_types
 
 def create_hierarchy(dict_types):
@@ -139,6 +143,35 @@ def create_hierarchy(dict_types):
     print("dictype", dict_types)
     return dict_types
 
+
+def make_act_sch(domain):
+    # -------  action schemata confusion   ------
+
+    # predicates = domain[5 - m_counter]  # what to do with predicates?
+
+    # Translating actions into when expressions (with every variable substitution from variable)?
+    # or passing it like this:
+    act_sch = []
+    for sublist in domain:
+        if sublist[0] == ":action":
+            print("sub_list[3]", sublist[3])
+            name = sublist[1]
+            parameter = assign_types(
+                sublist[3])  # This should work in a well formed domain. But should I check if action[2] = ":parameters"
+            precondition = expressions.make_expression(sublist[5]) # i + 2
+            effect = expressions.make_expression(sublist[7])
+            #         precondition = action[5]
+            #         effect = action[7]
+            act_sch.append((name, parameter, precondition, effect))
+
+
+
+    # testing
+    print("parameter", parameter)
+
+    return act_sch
+
+
 def parse_domain(fname):
     """
     Parses a PDDL domain file contained in the file fname
@@ -153,30 +186,32 @@ def parse_domain(fname):
     tokens = parser(fname)[1:]  # cut off ['define'
     print("tokens", tokens)
 
-    assignment = assign_types(tokens)
-    print("assignment", assignment)
+    print("list_tokens", tokens)
+    for sub_list in tokens:  # cut off [['domain', 'test-adl']
+        # if sub_list[0] == ":types":
+        sub_list = sub_list[1:]
+        print("sub_list", sub_list)
+
+        assignment = assign_types(tokens[2:])
+        print("assignment", assignment)
+
+
+   # m_counter = test(tokens)  # cut off ['define'
+    #print("m_counter", m_counter)
+
+
 
     dict_hierarchy = create_hierarchy(assignment)
     print("hierarchy types", dict_hierarchy)
 
-    # -------  action schemata confusion   ------
+    act_sch = make_act_sch(tokens)
+    print("act_sch", act_sch)
 
-    #predicates = domain[5 - m_counter]  # what to do with predicates?
-
-    # Translating actions into when expressions (with every variable substitution from variable)?
-    # or passing it like this:
-    act_sch = []
-    for action in tokens[6 - m_counter:]:
-        parameter = assign_types(
-            action[3])  # This should work in a well formed domain. But should I check if action[2] = ":parameters"
-        precondition = expressions.make_expression(action[5])
-        effect = expressions.make_expression(action[7])
-        #         precondition = action[5]
-        #         effect = action[7]
-        act_sch.append((parameter, precondition, effect))
 
     # it is recommended to return a list of an action schemata representation, a dictionary mapping types to sets of constants for each type, and the type hierarchy information. Take care to include an extra mapping from the type "" to a set of all objects.
-    return act_sch, type_to_constant, type_hierachy
+    return act_sch, dict_hierarchy
+
+
 
     return None 
     
@@ -223,8 +258,10 @@ def parse_problem(fname):
     
 if __name__ == "__main__":
     print("test")
-    print(parse_domain("type_hierarchy_test.pddl"))
-    #print(parse_domain(sys.argv[1]))
+
+    #print(parse_domain("type_hierarchy_test.pddl"))
+   # print(parse_domain(sys.argv[1]))
+    print(parse_domain("domain.pddl"))
     #print(parse_problem(sys.argv[2]))
 
 
