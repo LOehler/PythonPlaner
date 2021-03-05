@@ -4,40 +4,16 @@ import re
 
 SUPPORTED_REQUIREMENTS = [":strips",":typing",":disjunctive-preconditions",":equality",":existential-preconditions",":universal-preconditions",":conditional-effects",":adl"]
 
-# Small Exception raised if PDDL-Domain is supported
+
 class NotSupported(Exception):
+    """Small Exception raised if PDDL-Domain is supported"""
     def __init__(self, expression, message):
         self.expression = expression
         self.message = message
 
 
-def test(domain):
-    m_counter = 0  # keeps track of how many sections in the domain are missing
-
-    type_hierarchy = {}  # will be returned empty if :types is missing
-    if domain[2][0] == ":types": # hardcoded here
-        # TYPE_NAME - SUBTYPE_NAME  has to become type_hierachy[TYPENAME_NAME] = SUBTYPE_NAME
-        for i, x in enumerate(
-                domain[3][1:]):  # Iterates through types and adds to the sub types to the type (key of type_hierachy)
-            if x == "-":
-                if domain[2][i + 2] in type_hierarchy:
-                    type_hierarchy[domain[2][i + 2]] += [from_before]
-                else:
-                    type_hierarchy[domain[2][i + 2]] = [from_before]
-            elif domain[2][
-                i] == "-":  # not elegant but efficient. The key itself was already written in previous iteration
-                continue
-            else:
-                type_hierarchy[x] = []
-                from_before = x
-    else:
-        m_counter += 1
-
-    return m_counter
-
-
-
-def parser(fname):
+def tokenize(fname):
+    """takes filename and returns tokenized nested list of relevant input"""
     stack = []
     str_file = ""
     file = open(fname, "r")
@@ -51,123 +27,109 @@ def parser(fname):
                         #                                    optionally followed by other words joined by "-"
                         #                                    or paranthesis or "-"
     for token in tokens:
-        if token == ")": # Backtracing to last opening paranthesis from closing paranthesis and adding it to the stack again (as a sublist)
+        if token == ")":  # Backtracing to last opening paranthesis from closing paranthesis and adding it to the stack again (as a sublist)
             l = [stack.pop()]
             while not l[-1] == "(":
                 l.append(stack.pop())
-            l.pop() # removing "("
+            l.pop()  # removing "("
             stack.append(l[::-1])
         else:
             stack.append(token)
-    print("parser", stack[0])
-    return stack[0] # stack has only one element
+    return stack[0]  # stack has only one element
 
 
-# TODO split in multiple functions for readability
-def assign_types(sub_list):
-
-    # create dict
+def create_dict(types_list):
+    """creates dictionary (keys = content of :types)"""
     dict_types = {}
+    # make keys
+    if types_list[0] == ":types":  # just checking, can be del
+
+        # both of the following work:
+        # dict_types = {i: [] for i in sub_list[1:] }#and i != "-"}
+        dict_types = dict.fromkeys(types_list[1:], [])
+
+        # TODO
+        # cur problem: "-" is in dict bc it is in types
+        # cannot delete dash bc we need it for hierarchy
+        # just letting it in for now
 
     dict_types[""] = []  # if no dash
+    return dict_types
 
+
+def assign_to_types(sub_list, dict_types):
+    """filling dict_types with everything that belongs to certain type"""
 
     i = 0  # reset for each sublist
     stack = []
 
+    # TODO steal the enumerate thing from lukas
+
     for char in sub_list:
-        #  print("sub_list for loop", sub_list)
         if char != '-':
             if sub_list[i - 1] == '-':  # check if char == key and skip
-
                 i += 1
-                # continue
             else:
                 stack.append(char)
                 i += 1
-        # print("stack", stack)
         if char == '-':
-            print("key", sub_list[i+1])  # = key
-
-            dict_types[ sub_list[i+1]] = []
-            print("dict_types", dict_types)
-            if dict_types[sub_list[i + 1]]:  # list not empty -> key already has entries
-                dict_types[sub_list[i + 1]].append(  # append not overwrite
+            key = sub_list[i + 1]
+            dict_types[key] = []  # DO NOT DEL THIS LINE!!!
+            dict_types[key].append(  # append not overwrite
                     stack[0])  # stack[0] to get rid of nested list
-            else:
-                dict_types[sub_list[i + 1]] = stack
-            print("stack", stack)
             stack = []  # reset
             i += 1
 
-
-
-
-
-        # no type assigned TODO ERROR HERE?
-      #  if "-" not in sub_list and sub_list[0] == ":types":
-       #     dict_types[""] = sub_list
+        # no type assigned
+        if "-" not in sub_list and sub_list[0] == ":types":
+            dict_types[""] = sub_list
 
     return dict_types
 
+
 def create_hierarchy(dict_types):
-    # check if key is entry of other key
-    # = if key is a subtype
-    # then copy all entries of subtype to other key
+    """
+    >check if key is entry of other key
+    >if key is a subtype
+    >then copy all entries of subtype to entry of type
+    >and delete subtype from entry of type
+    """
+
     for key_i in dict_types:
         for key_j in dict_types:
             if key_i in dict_types[key_j]:  # if key_i is a subtype
-                print("key_i", key_i)
-                print("key_j", key_j)
 
-                # delete subtype in entry
-                test = dict_types[key_j]
-                print("test", test)
-                # test.remove(key_i)
-                print("", test.remove(key_i))
+                dict_types[key_j].remove(key_i)  # delete subtype in entry of type
 
-                if dict_types[key_i]:  # AND already has entries
-
+                if dict_types[key_i]:  # if subtype already has entries
                     list_to_copy = dict_types[key_i]  # copy entries of subtype
-                    print("list to copy", list_to_copy)
-
                     # add to key_i
                     for item in list_to_copy:
                         dict_types[key_j].append(item)  # works
-
                     #  dict_types[key_j].append(list_to_copy)  # would work too but nested lists
-                    continue
             else:
                 continue
 
-    print("dictype", dict_types)
     return dict_types
 
 
-def make_act_sch(domain):
-    # -------  action schemata confusion   ------
+def make_act_sch(sublist, dict_types):
 
-    # predicates = domain[5 - m_counter]  # what to do with predicates?
-
-    # Translating actions into when expressions (with every variable substitution from variable)?
-    # or passing it like this:
     act_sch = []
-    for sublist in domain:
-        if sublist[0] == ":action":
-            print("sub_list[3]", sublist[3])
-            name = sublist[1]
-            parameter = assign_types(
-                sublist[3])  # This should work in a well formed domain. But should I check if action[2] = ":parameters"
-            precondition = expressions.make_expression(sublist[5]) # i + 2
-            effect = expressions.make_expression(sublist[7])
-            #         precondition = action[5]
-            #         effect = action[7]
-            act_sch.append((name, parameter, precondition, effect))
 
+    if sublist[0] == ":action":
+        print("sub_list[3]", sublist[3])
+        name = sublist[1]  # works
+        parameter = assign_to_types(sublist[3], dict_types)  # works
+        precondition = expressions.make_expression(sublist[5])  # works
+        effect = expressions.make_expression(sublist[7])  # works
+        #         precondition = action[5]
+        #         effect = action[7]
 
-
-    # testing
-    print("parameter", parameter)
+        print("name", name)
+        print("parameter", parameter)
+        act_sch.append((name, parameter, precondition, effect))  # TODO issue with parameter (is overwritten each time)
+        print("act_sch", act_sch)
 
     return act_sch
 
@@ -183,37 +145,42 @@ def parse_domain(fname):
     to a set of all objects.
     """
 
-    tokens = parser(fname)[1:]  # cut off ['define'
+    tokens = tokenize(fname)[1:]  # cut off ['define'
     print("tokens", tokens)
 
-    print("list_tokens", tokens)
-    for sub_list in tokens:  # cut off [['domain', 'test-adl']
-        # if sub_list[0] == ":types":
-        sub_list = sub_list[1:]
-        print("sub_list", sub_list)
+    # checking requirements
+    requirements = tokens[1][1:]  # no check needed, requirements is not optional
+    for x in requirements:
+        if x not in SUPPORTED_REQUIREMENTS:
+            raise NotSupported(x, "Planner does not support it")
 
-        assignment = assign_types(tokens[2:])
-        print("assignment", assignment)
+    tokens = tokens[2:]  # cut off ['domain', 'wumpus-adl'], [':requirements', ':adl', ':typing']
+
+    dict_types = create_dict(tokens[0])  # only accessing :types
+    print("dict_types", dict_types)
+
+    for sub_list in tokens:  # iterating to find stuff like constants # could maybe skip and access constants directly
+        assignment_dict = assign_to_types(sub_list[1:], dict_types)
+    print("assignment", assignment_dict)
 
 
-   # m_counter = test(tokens)  # cut off ['define'
-    #print("m_counter", m_counter)
-
-
-
-    dict_hierarchy = create_hierarchy(assignment)
+    dict_hierarchy = create_hierarchy(assignment_dict)
     print("hierarchy types", dict_hierarchy)
 
-    act_sch = make_act_sch(tokens)
-    print("act_sch", act_sch)
+    all_actions = []
+    for sub_list in tokens:
+        act_sch = make_act_sch(sub_list, dict_hierarchy)
+        print("acr", act_sch)
+        all_actions.append(act_sch)
+        print("all_actions", all_actions)
+
+        # TODO what do we do with :predicates
 
 
     # it is recommended to return a list of an action schemata representation, a dictionary mapping types to sets of constants for each type, and the type hierarchy information. Take care to include an extra mapping from the type "" to a set of all objects.
-    return act_sch, dict_hierarchy
+    return all_actions, dict_hierarchy
 
 
-
-    return None 
     
 def parse_problem(fname):
     """
