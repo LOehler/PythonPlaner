@@ -3,34 +3,49 @@ import pddl
 import graph
 import expressions
 import pathfinding
-import sys 
+import sys
+from itertools import product
+
+def substitute_all(exp, combi, dic): # substitutes all variables of an expression with values of combi
+    print("expression before substitution: ", exp.string, "\n combination", combi)                                # <- delete
+    for i, atom in enumerate(combi):
+        subst_exp = expressions.Expression(expressions.substitute(exp, list(dic.keys())[i], atom))
+    print("substituted expression: ", subst_exp.string)                                # <- delete
+    return subst_exp 
 
 class ExpNode(graph.Node):
     def __init__(self, world, list_of_actions):
         self.world = world
         self.list_of_actions = list_of_actions
-    def get_neighbors():
-        
+    def get_neighbors(self):
         neighbors = []
-        # naive approach
-#         for action in self.list_of_actions: # move, take, shoot
-            
-#             for parameters in action[0]: # for parameter in the action parameters
-#                 for variable in action[0][parameters]: # for each variable of the paramters (types)
-#                     for types in self.world:  # agent, person, wumpus, gold, arrow, square, ""
-#                         for atom in self.world[types]: # e.g. sq-1-1, sq-1-2 ...
-#                             expressions.substitute(action[1], variable, atom)
-                    
-            
-        # for each action generate the neighbor that would be reached by this action in an edge list
-        # for action in self.list_of_actions:
-            # for each parameter assignment x that does not violate precondition of self.world
-            
-                # changed_world = expressions.apply(self.world, x)
-                # neighbors.append(Edge(cost = 1, name = "grounded_move(agent-1,sq-1-1,sq-2-1)", target = ExpNode(changed_world, list_of_actions))) #e.g
+        
+        # ------------------ naive - approach -------------------
+        for action in self.list_of_actions: # e.g. move, take, shoot
+              
+            # mapping each parameter variable to all possible world ground objects
+            variable_atom_mapping = {} # needs to be sorted to run it.products on
+            for type in action[1]:
+                for variable in action[1][type]:
+                    variable_atom_mapping[variable] = self.world.sets[type]  #  get list of ground objects mapped to the variable
+           
+            sorted_list = sorted(variable_atom_mapping) # needs to be a list for it.product
+            # Getting all possible combinations of variabe_atom_mapping entries in an iterator
+            combinations = product(*(variable_atom_mapping[variable] for variable in sorted_list))
+
+            # trying out for each combination if precondition holds. If so, it will be applied to the world and a new Edge will be appended to neighbors         
+            for combination in combinations:
+                print("combination before call", combination)
+                subst_exp = substitute_all(action[2], combination, variable_atom_mapping) # substitute the precondition
+                if expressions.models(self.world, subst_exp): # if precondition models world
+                    grounded_effect = substitute_all(action[3], combination, variable_atom_mapping) # substitue the effect
+                    changed_world = expressions.apply(self.world, grounded_effect) # apply changes to world
+                    neighbors.append(Edge(1, f"{action[0]}{tuple(combination)}", ExpNode(changed_world, self.list_of_actions))) # append new Edge to neighbors cost = 1, name = "action(grounded_variable, grounded_variable ...)", target = Nextnode with changed world
+    
         return neighbors # generated neighbor edges
+    
     def get_id(self):
-        return self.world # or something
+        return self.world#.atoms # No Node has same world atoms since they differ in applied changes
     
 def plan(domain, problem, useheuristic=True):
     """
@@ -51,9 +66,22 @@ def plan(domain, problem, useheuristic=True):
     
     # print("action schemata ", domain[0])
     # print("world ", {**domain[2], **domain[1], **problem[0]})
+    joined = {**domain[1], **problem[0]}
     
-    # create world from the initial atoms and the joined dict (type hierachy, constants, objects)
-    world = expressions.make_world(problem[1], {**domain[2], **domain[1], **problem[0]})
+    for key in list(domain[2].keys()):
+        if domain[2][key]: # if key is not empty
+            for item in domain[2][key]: # iterate over the subtypes of the type
+                if domain[2][item]: # if it is not a subtype of a subtype
+                    pass
+                    # recurse # not yet implemented but works for now because no subtypes of subtypes not in our domain (type hierarchy)
+                else:
+                    if key in joined:
+                        joined[key] += joined[item]
+                    else:
+                        joined[key] = joined[item]
+                    
+    # create world from the joined dict (type hierachy, constants, objects) and theinitial atoms and 
+    world = expressions.make_world(problem[1], joined)
     
     # create start node for A* from world and the action schemata
     start = ExpNode(world, domain[0])
@@ -66,9 +94,9 @@ def plan(domain, problem, useheuristic=True):
         return pathfinding.default_heuristic
         
     def isgoal(state):
-#         if not expressions.models(state.get_id(), problem[2]): 
+#         if not expressions.models(state.world, problem[2]): 
 #             return False
-        return True
+        return False#True
     
     # start = graph.Node() # was here before
     return pathfinding.astar(start, heuristic if useheuristic else pathfinding.default_heuristic, isgoal)

@@ -152,7 +152,7 @@ def models(world, expression):
 
 #     elif expression.name == 'exists':
 #         for value in world.sets[expression.children[0].children[1].string]:
-#             if models(world, Expression(substitute(expression.children[1], expression.children[0].string[0], value))):
+#             if models(world, substitute(expression.children[1], expression.children[0].string[0], value)):
 #                 return True
 #         return False
         

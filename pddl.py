@@ -29,7 +29,7 @@ def parser(fname):
             while not l[-1] == "(":
                 l.append(stack.pop())
             l.pop() # removing "("
-            stack.append(l[::-1])
+            stack.append(tuple(l[::-1]))
         else:
             stack.append(tocken)
     return stack[0] # stack has only one element
@@ -77,7 +77,6 @@ def parse_domain(fname):
     The return value of this function is passed to planner.plan, and does not have to follow any particular format
     """
     domain = parser(fname)
-    
     #checking requirements
     requirements = domain[2][1:] # no check needed, requirements is not optional
     for x in requirements:
@@ -123,9 +122,8 @@ def parse_domain(fname):
         effect = expressions.make_expression(action[7])
 #         precondition = action[5]
 #         effect = action[7]
-        act_sch.append((parameter, precondition, effect))
+        act_sch.append((action[1], parameter, precondition, effect))
 
-    
 # it is recommended to return a list of an action schemata representation, a dictionary mapping types to sets of constants for each type, and the type hierarchy information. Take care to include an extra mapping from the type "" to a set of all objects.
     return act_sch, type_to_constant, type_hierachy
     
