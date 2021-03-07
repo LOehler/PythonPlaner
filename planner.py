@@ -7,10 +7,9 @@ import sys
 from itertools import product
 
 def substitute_all(exp, combi, dic): # substitutes all variables of an expression with values of combi
-    print("expression before substitution: ", exp.string, "\n combination", combi)                                # <- delete
+    subst_exp = exp
     for i, atom in enumerate(combi):
-        subst_exp = expressions.Expression(expressions.substitute(exp, list(dic.keys())[i], atom))
-    print("substituted expression: ", subst_exp.string)                                # <- delete
+        subst_exp = expressions.Expression(expressions.substitute(subst_exp, list(dic.keys())[i], atom))
     return subst_exp 
 
 class ExpNode(graph.Node):
@@ -20,7 +19,12 @@ class ExpNode(graph.Node):
     def get_neighbors(self):
         neighbors = []
         
-        # ------------------ naive - approach -------------------
+        '''current Problems:
+        what to do when no type is given for variable in :parameters (why is ?what substituted by agent-1)
+        find a better get_id() return
+        find a better is_goal definition
+        make the creation of joined recursive'''
+        
         for action in self.list_of_actions: # e.g. move, take, shoot
               
             # mapping each parameter variable to all possible world ground objects
@@ -30,18 +34,22 @@ class ExpNode(graph.Node):
                     variable_atom_mapping[variable] = self.world.sets[type]  #  get list of ground objects mapped to the variable
            
             sorted_list = sorted(variable_atom_mapping) # needs to be a list for it.product
-            # Getting all possible combinations of variabe_atom_mapping entries in an iterator
+            # Getting all possible combinations of variabe_atom_mapping entries in an iterator (from itertools)
             combinations = product(*(variable_atom_mapping[variable] for variable in sorted_list))
 
             # trying out for each combination if precondition holds. If so, it will be applied to the world and a new Edge will be appended to neighbors         
             for combination in combinations:
-                print("combination before call", combination)
                 subst_exp = substitute_all(action[2], combination, variable_atom_mapping) # substitute the precondition
                 if expressions.models(self.world, subst_exp): # if precondition models world
                     grounded_effect = substitute_all(action[3], combination, variable_atom_mapping) # substitue the effect
+                    
+                    print("applied changes", grounded_effect.string)
+                    
                     changed_world = expressions.apply(self.world, grounded_effect) # apply changes to world
-                    neighbors.append(Edge(1, f"{action[0]}{tuple(combination)}", ExpNode(changed_world, self.list_of_actions))) # append new Edge to neighbors cost = 1, name = "action(grounded_variable, grounded_variable ...)", target = Nextnode with changed world
-    
+                    neighbors.append(graph.Edge(ExpNode(changed_world, self.list_of_actions), 1, f"{action[0]}{tuple(combination)}")) # append new Edge to neighbors target = Nextnode with changed world, cost = 1, name = "action(grounded_variable, grounded_variable ...)"
+                    
+                    print(f"neighbors in edge {action[0]}{tuple(combination)}")
+        
         return neighbors # generated neighbor edges
     
     def get_id(self):
@@ -63,9 +71,6 @@ def plan(domain, problem, useheuristic=True):
        - visited is the total number of nodes that were added to the frontier during the execution of the algorithm 
        - expanded is the total number of nodes that were expanded (i.e. whose neighbors were added to the frontier)
     """
-    
-    # print("action schemata ", domain[0])
-    # print("world ", {**domain[2], **domain[1], **problem[0]})
     joined = {**domain[1], **problem[0]}
     
     for key in list(domain[2].keys()):
@@ -73,7 +78,7 @@ def plan(domain, problem, useheuristic=True):
             for item in domain[2][key]: # iterate over the subtypes of the type
                 if domain[2][item]: # if it is not a subtype of a subtype
                     pass
-                    # recurse # not yet implemented but works for now because no subtypes of subtypes not in our domain (type hierarchy)
+                    # recurse # not yet implemented but works for now because no subtypes of subtypes in our domain (type hierarchy)
                 else:
                     if key in joined:
                         joined[key] += joined[item]
@@ -91,7 +96,7 @@ def plan(domain, problem, useheuristic=True):
  
         
     def heuristic(state, action):
-        return pathfinding.default_heuristic
+        return pathfinding.default_heuristic(state, action)
         
     def isgoal(state):
 #         if not expressions.models(state.world, problem[2]): 

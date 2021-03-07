@@ -94,7 +94,7 @@ def parse_domain(fname):
                     type_hierachy[domain[3][i+2]] += [from_before]
                 else:
                     type_hierachy[domain[3][i+2]] = [from_before]
-            elif domain[3][i] == "-": # not elegant but efficient. The key itself was already written in previous iteration
+            elif domain[3][i] == "-":
                 continue
             else:
                 type_hierachy[x] = []
@@ -108,23 +108,15 @@ def parse_domain(fname):
     else:
         m_counter += 1
         
-        
-    # -------  action schemata confusion   ------
-    
-    predicates = domain[5 - m_counter] # what to do with predicates?
-    
-    # Translating actions into when expressions (with every variable substitution from variable)?
-    # or passing it like this:
+    # Predicates not needed since they are already contained in the structure of precondition/effect
+    # Action schemat contains a list of tuples for each action with parameter (dict) precondition (Expression) und effect (Expression)
     act_sch = []
     for action in domain[6 - m_counter:]:
         parameter = make_dic(action[3])  # This should work in a well formed domain. But should I check if action[2] = ":parameters"
         precondition = expressions.make_expression(action[5])
         effect = expressions.make_expression(action[7])
-#         precondition = action[5]
-#         effect = action[7]
         act_sch.append((action[1], parameter, precondition, effect))
 
-# it is recommended to return a list of an action schemata representation, a dictionary mapping types to sets of constants for each type, and the type hierarchy information. Take care to include an extra mapping from the type "" to a set of all objects.
     return act_sch, type_to_constant, type_hierachy
     
 def parse_problem(fname):

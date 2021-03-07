@@ -57,7 +57,6 @@ def astar(start, heuristic, goal):
         for neighbor in cur_node.get_neighbors(): # get_neighbors() = list with graph.Edge
         # looking for best heuristic in all neighbors
         # A* adds to the cost for the next neighbor a heuristic to improve search
-        
             new_cost = neighbor.cost + cost_so_far[cur_node.get_id()]
             if neighbor.target.get_id() not in cost_so_far or new_cost < cost_so_far[neighbor.target.get_id()]:
                 vis_count += 1 # incrementing visited nodes
