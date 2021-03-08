@@ -49,26 +49,28 @@ def type_to_object(list):
             l.append(x)
     return dict
 
-def make_dic(list):
+def make_pred_dic(list):
     
-    #  ?A1 ?A2 ... ?AN - PREDICATE_1_NAME  has to become type_hierachy[PREDICTE_1_NAME] = [?A1 ?A2 ... ?AN]
-    dic = {}
-    l = [] # list supposed to be returned with key in type_hierachy
+    #  ?A1 ?A2 ... ?AN - PREDICATE_1_NAME  has to become dic[PREDICTE_1_NAME] = [?A1 ?A2 ... ?AN]
+    dic = {} # dic mapping types to variables
+    variables = [] # list containing variables
+    var_struc = [] # saves the structure of the variables
     for x in list:
         if x[0] == "?":
-            l.append(x)
+            variables.append(x)
+            var_struc.append(x)
         elif x == "-":
             continue
         else:
             if x in dic:
-                dic[x] += l
+                dic[x] += variables
             else:
-                dic[x] = l
-            l = []
-    dic[""] = l # rest of list
-    return dic
-     
-            
+                dic[x] = variables
+            variables = []
+    dic[""] = variables # rest of list
+    return dic, var_struc
+
+          
     
 def parse_domain(fname):
     """
@@ -112,10 +114,10 @@ def parse_domain(fname):
     # Action schemat contains a list of tuples for each action with parameter (dict) precondition (Expression) und effect (Expression)
     act_sch = []
     for action in domain[6 - m_counter:]:
-        parameter = make_dic(action[3])  # This should work in a well formed domain. But should I check if action[2] = ":parameters"
         precondition = expressions.make_expression(action[5])
         effect = expressions.make_expression(action[7])
-        act_sch.append((action[1], parameter, precondition, effect))
+        pred_dic, param_structure = make_pred_dic(action[3]) # dictionary of the predicates
+        act_sch.append([action[1], precondition, effect, param_structure, pred_dic]) # action name and list of all possible grounded preconditions with effects (and for the name the assigned combination)
 
     return act_sch, type_to_constant, type_hierachy
     
