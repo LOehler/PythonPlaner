@@ -115,26 +115,32 @@ def create_hierarchy(dict_types):
 
 def make_act_sch(sublist, dict_types):
 
-    act_sch = []
+    act_sch = {}
 
-    if sublist[0] == ":action":
-        print("sub_list[3]", sublist[3])
-        name = sublist[1]  # works
-        parameter = assign_to_types(sublist[3], dict_types)  # works
-        precondition = expressions.make_expression(sublist[5])  # works
-        effect = expressions.make_expression(sublist[7])  # works
-        #         precondition = action[5]
-        #         effect = action[7]
 
-        print("name", name)
-        print("parameter", parameter)
-        act_sch.append((name, parameter, precondition, effect))  # TODO issue with parameter (is overwritten each time)
-        print("act_sch", act_sch)
+    print("sub_list[3]", sublist[3])
+    name = sublist[1]  # works
+    parameter = assign_to_types(sublist[3], dict_types)  # works
+    precondition = expressions.make_expression(sublist[5])  # works
+    effect = expressions.make_expression(sublist[7])  # works
+    #         precondition = action[5]
+    #         effect = action[7]
+
+    # TODO check if wumpus alive
+
+    print("name", name)
+    print("parameter", parameter)
+   # act_sch.append((name, parameter, precondition, effect))  # TODO issue with parameter (is overwritten each time)
+
+    act_sch = [name, parameter, precondition, effect]
+    #nested_dict = dict.fromkeys()
+  #  act_sch = dict.fromkeys(name, [])
+    print("act_sch", act_sch)
 
     return act_sch
 
 
-def parse_domain(fname):
+def parse_domain(fname_domain, fname_prob):
     """
     Parses a PDDL domain file contained in the file fname
     
@@ -145,7 +151,7 @@ def parse_domain(fname):
     to a set of all objects.
     """
 
-    tokens = tokenize(fname)[1:]  # cut off ['define'
+    tokens = tokenize(fname_domain)[1:]  # cut off ['define'
     print("tokens", tokens)
 
     # checking requirements
@@ -159,7 +165,7 @@ def parse_domain(fname):
     dict_types = create_dict(tokens[0])  # only accessing :types
     print("dict_types", dict_types)
 
-    for sub_list in tokens:  # iterating to find stuff like constants # could maybe skip and access constants directly
+    for sub_list in tokens:  # iterating to find stuff like constants # TODO skip and access constants directly
         assignment_dict = assign_to_types(sub_list[1:], dict_types)
     print("assignment", assignment_dict)
 
@@ -169,16 +175,35 @@ def parse_domain(fname):
 
     all_actions = []
     for sub_list in tokens:
-        act_sch = make_act_sch(sub_list, dict_hierarchy)
-        print("acr", act_sch)
-        all_actions.append(act_sch)
-        print("all_actions", all_actions)
+        if sub_list[0] == ":action":
+            act_sch = make_act_sch(sub_list, dict_hierarchy)
+            print("acr", act_sch)
+            all_actions.append(act_sch)
+            print("all_actions", all_actions)
 
         # TODO what do we do with :predicates
 
 
+
+    #-------------PARSING PROBLEM---------------------------------------------------------------------------------------
+
+    tokens_prob = tokenize(fname_prob)[1:]  # cut off ['define'
+  #  print("tokens_prob", tokens_prob)
+
+    for sub_list in tokens_prob:
+        if sub_list[0] == ":objects":
+            obj_dict = assign_to_types(sub_list[1:], dict_types)
+
+   # print("obj-dict", obj_dict)
+
+    for sub_list in tokens_prob:
+        if sub_list[0] == ":init":
+            state = sub_list[1:]  # cut off init
+
+
     # it is recommended to return a list of an action schemata representation, a dictionary mapping types to sets of constants for each type, and the type hierarchy information. Take care to include an extra mapping from the type "" to a set of all objects.
-    return all_actions, dict_hierarchy
+    return all_actions, dict_hierarchy, obj_dict, state
+# (all_actions, dict_hierarchy, obj_dict, state) = parsed
 
 
     
@@ -193,14 +218,15 @@ def parse_problem(fname):
     representing the goal.
     """
 
-    tokens = parser(fname)[1:]  # ignore define
+    state = []
+    tokens = tokenize(fname)[1:]  # ignore define
     print("tokens", tokens)
+    
+    for sub_list in tokens:
+        if sub_list[0] == ":init":
+            state = sub_list[1:]  # cut off init
 
-    assignment = assign_types(tokens)
-    print("assignment", assignment)
 
-    dict_hierarchy = create_hierarchy(assignment)
-    print("hierarchy types", dict_hierarchy)
 
     # checking requirements
     requirements = []  # TODO: get requirements from domain
@@ -214,13 +240,11 @@ def parse_problem(fname):
     dom_dic = {"domain": domain_name, "types": [], "constants": [], "predicates": [],
                "actions": []}  # WARNING predicates is optional
 
-    # it is recommended to return a list of an action schemata representation, a dictionary mapping types to sets of constants
-    # for each type, and the type hierarchy information.
-    # Take care to include an extra mapping from the type "" to a set of all objects.
 
 
 
-    return None
+
+    return state
     
     
 if __name__ == "__main__":
@@ -228,7 +252,11 @@ if __name__ == "__main__":
 
     #print(parse_domain("type_hierarchy_test.pddl"))
    # print(parse_domain(sys.argv[1]))
-    print(parse_domain("domain.pddl"))
-    #print(parse_problem(sys.argv[2]))
+    parsed = (parse_domain("domain.pddl", sys.argv[2]))
+
+    (all_actions, dict_hierarchy, obj_dict, state) = parsed
+    print("obj_dict", obj_dict)
+
+  #  print(parse_problem(sys.argv[2]))
 
 
