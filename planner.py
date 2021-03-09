@@ -15,59 +15,49 @@ class ExpNode(graph.Node):
         neighbors = []
         
         '''current Problems:
-        what to do when no type is given for variable in :parameters
         find a better get_id() return
         find a better is_goal definition
         make the creation of joined recursive
-        get combination in order when passing it as Edge.name (now somewhat right. 
-         But order is dependent on pddl.make_dic() meaning when there are several types, they will be put next to each other)
         '''
-        
+        print("neighbors")
         for action in self.list_of_actions: # e.g. move, take, shoot
             for subst_expr in action[1]:
                 if expressions.models(self.world, subst_expr[0]): # if precondition models world
+                    
+                    print(f"\t in edge {action[0]}{tuple(subst_expr[2])}")
+                    
                     changed_world = expressions.apply(self.world, subst_expr[1]) # apply changes to world
-                    neighbors.append(graph.Edge(ExpNode(changed_world, self.list_of_actions), 1, f"{action[0]}{tuple(subst_expr[2])}")) # append new Edge to neighbors target = Nextnode with changed world, cost = 1, name = "action(grounded_variable, grounded_variable ...)"
 
-                    print(f"neighbors in edge {action[0]}{tuple(subst_expr[2])}")
+                     # append new Edge to neighbors   target = Nextnode with changed world, 
+                                                    # cost = 1, 
+                                                    # name = "action(grounded_variable, grounded_variable ...)"
+                    neighbors.append(graph.Edge(ExpNode(changed_world, self.list_of_actions), 1, f"{action[0]}{tuple(subst_expr[2])}"))
         
         return neighbors # generated neighbor edges
     
     def get_id(self):
-        return self.world#.atoms # No Node has same world atoms since they differ in applied changes
+        return self.world#.atoms # No Node has same world atoms since they differ in applied changes ??????
     
     
 def substitute_all(exp, combi, dic, sorted_list): # substitutes all variables of an expression with values of combi
     subst_exp = exp
     for atom, variable in zip(combi, sorted_list): # iterate with atom from combi and variable from sorted_list
         subst_exp = expressions.Expression(expressions.substitute(subst_exp, variable, atom))
-        
-        # print("subst_exp", subst_exp.string)
-        
+     
     return subst_exp           
      
   
     # Substitutes (or grounds) precondition with all possible variable assignments
 def all_subst_exp(parameters, precondition, effect, param_structure, world):
-
+ 
     # mapping each parameter variable to all possible world ground objects
     variable_atom_mapping = {}
     for type in parameters:
-        for variable in parameters[type]:
+        for variable in parameters[type]:          
             variable_atom_mapping[variable] = world.sets[type]  #  get list of ground objects mapped to the variable
-
-    # print("variable_atom_mapping", variable_atom_mapping)
-
-    # sorted_list = variable_atom_mapping.keys() # needs to be a list for it.product
-
-    # print("sorted_list ", sorted_list)
 
     # Getting all possible combinations of variabe_atom_mapping entries in an iterator (from itertools)
     combinations = product(*(variable_atom_mapping[var] for var in param_structure))
-
-#             print("all combinations")
-#             for combi in combinations:
-#                 print(combi)
 
     # trying out for each combination if precondition holds. If so, it will be applied to the world and a new Edge will be appended to neighbors   
     subst_exp_eff = []
@@ -95,18 +85,20 @@ def plan(domain, problem, useheuristic=True):
     """
     joined = {**domain[1], **problem[0]}
     
-    for key in list(domain[2].keys()):
-        if domain[2][key]: # if key is not empty
+    for key in domain[2].keys(): # going through type_hierarchy
+        if domain[2][key]: # if list is not empty
             for item in domain[2][key]: # iterate over the subtypes of the type
-                if domain[2][item]: # if it is not a subtype of a subtype
+                if domain[2][item]: # if it is a subtype of a subtype
+                    print("im recursing")
                     pass
                     # recurse # not yet implemented but works for now because no subtypes of subtypes in our domain (type hierarchy)
                 else:
                     if key in joined:
-                        joined[key] += joined[item]
+                        joined[key] += list(joined[item])
                     else:
-                        joined[key] = joined[item]
-                    
+                        joined[key] = list(joined[item])
+                        # holy crap. Took me a bit over an hour to figure out that this was call by reference without list()
+
     # create world from the joined dict (type hierachy, constants, objects) and the initial atoms and 
     world = expressions.make_world(problem[1], joined)
     
@@ -114,24 +106,18 @@ def plan(domain, problem, useheuristic=True):
     for action in domain[0]:
         param_structure = action[3] # ?who ?where ?what   ,  ?who ?where ?with-arrow ?victim ?where-victim
         action_list.append((action[0], all_subst_exp(action[4], action[1], action[2], param_structure, world)))
-    
         
     # create start node for A* from world and the action schemata
     start = ExpNode(world, action_list)
-    
-#     procedural generate neighbors with A*
-#           define neighborhood each time as actions from domain that are possible (from each node) = graph
- 
         
     def heuristic(state, action):
         return pathfinding.default_heuristic(state, action)
         
     def isgoal(state):
-        if not expressions.models(state.world, problem[2]): 
-            return False
-        return True
+        if expressions.models(state.get_id(), problem[2]): 
+            return True
+        return False
     
-    # start = graph.Node() # was here before
     return pathfinding.astar(start, heuristic if useheuristic else pathfinding.default_heuristic, isgoal)
 
 def main(domain, problem, useheuristic):

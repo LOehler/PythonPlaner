@@ -32,6 +32,9 @@ class World:
     def __init__(self, atoms, sets):
         self.sets = sets
         self.atoms = set(atoms)
+        
+    def __eq__(self, other):
+        if models(self.atoms)
 
             
 def make_expression(ast):
@@ -146,15 +149,16 @@ def models(world, expression):
         
     elif expression.name == 'imply':
         if models(world, expression.children[0]) and not models(world, expression.children[1]):
-        # if not models(world, expression.children[0]) or models(world, expression.children[1]):
             return False
         return True
 
-#     elif expression.name == 'exists':
-#         for value in world.sets[expression.children[0].children[1].string]:
-#             if models(world, substitute(expression.children[1], expression.children[0].string[0], value)):
-#                 return True
-#         return False
+    elif expression.name == 'exists':
+        # iterating over all values with the specified type
+        for value in world.sets[expression.children[0].children[1].string]: # Name of type given on the last position of the first part after exists
+            # checking if world models substituted 
+            if models(world, Expression(substitute(expression.children[1], expression.children[0].string[0], value))):
+                return True
+        return False
         
     elif expression.name == 'forall':
         for value in world.sets[expression.children[0].children[1].string]:
@@ -174,9 +178,9 @@ def substitute(expression, variable, value):
     """
 
     # return deep copy with all variables replaced
-    if expression.name[0] == '?':
-        return expression.string
-    elif not expression.name in OPERATORS or expression.name == '=':
+
+    # feels dirty but "=" is the only operator that does not subdivide the tree further
+    if not expression.name in OPERATORS or expression.name == '=':
         new_list = []
         for exp in expression.string:
             if exp == variable:
@@ -185,7 +189,7 @@ def substitute(expression, variable, value):
                 new_list.append(exp)
     else: # nested case
         new_list = [expression.name]
-        
+        # substitutes all nested expression in one list (recursively)
         for exp in expression.children:
             new_list.append(substitute(exp, variable, value))
     return tuple(new_list)
@@ -229,7 +233,6 @@ if __name__ == "__main__":
     
     print("Should be False: ", end="")
     print(models(apply(world, change), exp))
-
     
     
     # _____Mickey_Example____________

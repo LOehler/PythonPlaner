@@ -38,6 +38,9 @@ def astar(start, heuristic, goal):
     while True: # Runs until goal is found or frontier is empty
         
         if goal(cur_node):
+            
+            print("FINISHED")
+            
             cost = 0
             edge_path = []
             while cur_node != start:

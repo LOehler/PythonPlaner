@@ -23,3 +23,9 @@
 
   (:goal (and (have agent-1 the-gold) (at agent-1 sq-1-1) (alive agent-1)))
   )
+  
+  ;                   wumpus
+  ; sq-2-1 - sq-2-2 - sq-2-3
+  ;    |       |        |
+  ; sq-1-1 - sq-1-2 - sq-1-3
+  ; agent     pit      gold
