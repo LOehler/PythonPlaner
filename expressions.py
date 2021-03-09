@@ -31,11 +31,8 @@ class Expression:
 class World:
     def __init__(self, atoms, sets):
         self.sets = sets
-        self.atoms = set(atoms)
+        self.atoms = set(atoms) # frozenset() ????
         
-    def __eq__(self, other):
-        if models(self.atoms)
-
             
 def make_expression(ast):
     """

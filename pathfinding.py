@@ -37,10 +37,7 @@ def astar(start, heuristic, goal):
 
     while True: # Runs until goal is found or frontier is empty
         
-        if goal(cur_node):
-            
-            print("FINISHED")
-            
+        if goal(cur_node):            
             cost = 0
             edge_path = []
             while cur_node != start:
@@ -68,14 +65,12 @@ def astar(start, heuristic, goal):
                 frontier.put((heuristic(cur_node, neighbor) + neighbor.cost, vis_count, neighbor)) # vis_count only in there to avoid neighbor
                                                                                                    # comparison (ask for more detailed explanation!)
                 came_from[neighbor.target.get_id()] = cur_node # set parrent (for retracing the path)
-
-
-        new_edge = frontier.get()[2] # Gets the Edge of the lowest Heuristic
-        cur_node = new_edge.target
          
         if frontier.empty():
             return [],0, vis_count, expa_count
 
+        new_edge = frontier.get()[2] # Gets the Edge of the lowest Heuristic
+        cur_node = new_edge.target
 
 
 def print_path(result):

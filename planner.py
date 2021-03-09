@@ -13,18 +13,12 @@ class ExpNode(graph.Node):
         self.list_of_actions = list_of_actions
     def get_neighbors(self):
         neighbors = []
-        
-        '''current Problems:
-        find a better get_id() return
-        find a better is_goal definition
-        make the creation of joined recursive
-        '''
-        print("neighbors")
+                
         for action in self.list_of_actions: # e.g. move, take, shoot
             for subst_expr in action[1]:
                 if expressions.models(self.world, subst_expr[0]): # if precondition models world
                     
-                    print(f"\t in edge {action[0]}{tuple(subst_expr[2])}")
+                    # print(f"\t in edge {action[0]}{tuple(subst_expr[2])}")
                     
                     changed_world = expressions.apply(self.world, subst_expr[1]) # apply changes to world
 
@@ -36,7 +30,7 @@ class ExpNode(graph.Node):
         return neighbors # generated neighbor edges
     
     def get_id(self):
-        return self.world#.atoms # No Node has same world atoms since they differ in applied changes ??????
+        return frozenset(self.world.atoms) # No Node has same world atoms since they differ in applied changes. Make world.atoms a frozenset
     
     
 def substitute_all(exp, combi, dic, sorted_list): # substitutes all variables of an expression with values of combi
@@ -83,28 +77,50 @@ def plan(domain, problem, useheuristic=True):
        - visited is the total number of nodes that were added to the frontier during the execution of the algorithm 
        - expanded is the total number of nodes that were expanded (i.e. whose neighbors were added to the frontier)
     """
-    joined = {**domain[1], **problem[0]}
+    
+    # joining the type_to_constants and objects from problem
+    for key in domain[1]:
+        if key in problem[0]:
+            problem[0][key] += list(domain[1][key])
+        else:
+            problem[0][key] = list(domain[1][key])           
+    joined = problem[0]
+    
+    # print("before typehierarchy", joined, domain[2])
+    
+    def repl_subtype(type_hierarchy, key):
+        for item in type_hierarchy[key]: # iterate over the subtypes of the type
+
+            # print("item ", item)
+            # print(item, "has stuff", bool(type_hierarchy[item]))
+            
+            if not item in joined:
+                joined[item] = []
+
+#             if not type_hierarchy[item]:
+                if key in joined:
+                    joined[key] += list(joined[item])
+                else:
+                    joined[key] = list(joined[item])
+#             else:
+#                 repl_subtype(type_hierarchy, item)
+
     
     for key in domain[2].keys(): # going through type_hierarchy
+        
+        # print("key", key)
+        
         if domain[2][key]: # if list is not empty
-            for item in domain[2][key]: # iterate over the subtypes of the type
-                if domain[2][item]: # if it is a subtype of a subtype
-                    print("im recursing")
-                    pass
-                    # recurse # not yet implemented but works for now because no subtypes of subtypes in our domain (type hierarchy)
-                else:
-                    if key in joined:
-                        joined[key] += list(joined[item])
-                    else:
-                        joined[key] = list(joined[item])
-                        # holy crap. Took me a bit over an hour to figure out that this was call by reference without list()
+            repl_subtype(domain[2], key) # replacing subtypes
+                        
+    # print("joined ", joined)
 
     # create world from the joined dict (type hierachy, constants, objects) and the initial atoms and 
     world = expressions.make_world(problem[1], joined)
     
     action_list = []
     for action in domain[0]:
-        param_structure = action[3] # ?who ?where ?what   ,  ?who ?where ?with-arrow ?victim ?where-victim
+        param_structure = action[3]
         action_list.append((action[0], all_subst_exp(action[4], action[1], action[2], param_structure, world)))
         
     # create start node for A* from world and the action schemata
@@ -114,7 +130,7 @@ def plan(domain, problem, useheuristic=True):
         return pathfinding.default_heuristic(state, action)
         
     def isgoal(state):
-        if expressions.models(state.get_id(), problem[2]): 
+        if expressions.models(state.world, problem[2]): 
             return True
         return False
     

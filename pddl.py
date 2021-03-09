@@ -93,11 +93,13 @@ def parse_domain(fname):
         for i, x in enumerate(domain[3][1:]): # Iterates through types and adds to the sub types to the type (key of type_hierachy)
             if x == "-":
                 if domain[3][i+2] in type_hierachy:
-                    type_hierachy[domain[3][i+2]] += [from_before]
+                    type_hierachy[domain[3][i+2]] += list([from_before])
                 else:
-                    type_hierachy[domain[3][i+2]] = [from_before]
+                    type_hierachy[domain[3][i+2]] = list([from_before])
             elif domain[3][i] == "-":
                 continue
+            elif x in type_hierachy:
+                from_before = x
             else:
                 type_hierachy[x] = []
                 from_before = x
@@ -136,7 +138,7 @@ def parse_problem(fname):
         init.append(tuple(x))
     
 # it is recommend to return a dictionary mapping types to sets of objects for each type (same as for the domain), a list of atoms representing the initial state, and an expression object (perhaps obtained with expressions.make_expression) representing the goal.
-    return type_to_object(problem[3][1:]), init, expressions.make_expression(problem[5][1:]) # objects, init, goal
+    return type_to_object(problem[3][1:]), init, expressions.make_expression(problem[5][1:][0]) # objects, init, goal
     
     
 if __name__ == "__main__":
