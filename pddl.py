@@ -155,12 +155,12 @@ def parse_domain(fname_domain, fname_prob):
     print("tokens", tokens)
 
     # checking requirements
-    requirements = tokens[1][1:]  # no check needed, requirements is not optional
-    for x in requirements:
-        if x not in SUPPORTED_REQUIREMENTS:
-            raise NotSupported(x, "Planner does not support it")
+  #  requirements = tokens[1][1:]  # no check needed, requirements is not optional
+  #  for x in requirements:
+      #  if x not in SUPPORTED_REQUIREMENTS:
+         #   raise NotSupported(x, "Planner does not support it")
 
-    tokens = tokens[2:]  # cut off ['domain', 'wumpus-adl'], [':requirements', ':adl', ':typing']
+    tokens = tokens[1:]  # cut off ['domain', 'wumpus-adl'], [':requirements', ':adl', ':typing']
 
     dict_types = create_dict(tokens[0])  # only accessing :types
     print("dict_types", dict_types)
@@ -252,7 +252,7 @@ if __name__ == "__main__":
 
     #print(parse_domain("type_hierarchy_test.pddl"))
    # print(parse_domain(sys.argv[1]))
-    parsed = (parse_domain("domain.pddl", sys.argv[2]))
+    parsed = (parse_domain("type_hierarchy_test.pddl", sys.argv[2]))
 
     (all_actions, dict_hierarchy, obj_dict, state) = parsed
     print("obj_dict", obj_dict)

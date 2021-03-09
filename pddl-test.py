@@ -1,3 +1,4 @@
+
 from queue import LifoQueue
 import re
 
@@ -191,14 +192,14 @@ def assign_types(list_tokens):
                     print("key_i", key_i)
                     print("key_j", key_j)
 
+                    dict_types[key_j].remove(key_i)  # delete subtype in entry of type
+
                     list_to_copy = dict_types[key_i]  # copy entries of subtype
                     print("list to copy", list_to_copy)
 
                     # add to key_i
                     for item in list_to_copy:
                         dict_types[key_j].append(item)  # works
-
-                    # delete subtype in entry
 
                     #  dict_types[key_j].append(list_to_copy)  # would work too but nested lists
                     continue
@@ -221,6 +222,7 @@ def assign_types(list_tokens):
 
 assign_types(tokens)
 #print(assign_types(tokens))
+
 
 
 

@@ -13,7 +13,7 @@
     (:test
         v1 - vehicle
         t2 - truck
-        paris - location
+        sachsen - location
         berlin  - city
         )
 
