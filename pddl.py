@@ -9,7 +9,9 @@ class NotSupported(Exception):
     def __init__(self, expression, message):
         self.expression = expression
         self.message = message
-        
+
+# takes a file and tokenizes the input (ignoring comment lines starting with ";")
+# the resulting list is then nested depending on the placement of "(" and ")"
 def parser(fname):
     stack = []
     str_file = ""
@@ -23,6 +25,8 @@ def parser(fname):
                         # translation of regular expression optionally ":" or "?" with arbitrarily many letters following it (word or number)
                         #                                    optionally followed by other words joined by "-"
                         #                                    or paranthesis or "-"
+                
+    # nesting into sublists depending on placement of "(" and ")"
     for tocken in tockens:
         if tocken == ")": # Backtracing to last opening paranthesis from closing paranthesis and adding it to the stack again (as a sublist)
             l = [stack.pop()]
@@ -34,9 +38,10 @@ def parser(fname):
             stack.append(tocken)
     return stack[0] # stack has only one element
 
+# creates a dictionary that maps types to world objects
+# c1 c2 ... cN - type  has to become type_to_constant[type] = [c1, c2, ... cN]
 def type_to_object(list):
     dict = {"" : []}
-    # c1 c2 ... cN - type  has to become type_to_constant[type] = [c1, c2, ... cN]
     l = [] # list supposed to be returned with key in Type_to_constant
     for i, x in enumerate(list): # For each element after "-" put previous elements as list in dict 
         if x == "-":
@@ -49,9 +54,9 @@ def type_to_object(list):
             l.append(x)
     return dict
 
+# creates a dictionary that maps variables to predicates
+#  ?A1 ?A2 ... ?AN - PREDICATE_1_NAME  has to become dic[PREDICTE_1_NAME] = [?A1 ?A2 ... ?AN]
 def make_pred_dic(list):
-    
-    #  ?A1 ?A2 ... ?AN - PREDICATE_1_NAME  has to become dic[PREDICTE_1_NAME] = [?A1 ?A2 ... ?AN]
     dic = {} # dic mapping types to variables
     variables = [] # list containing variables
     var_struc = [] # saves the structure of the variables
@@ -79,6 +84,7 @@ def parse_domain(fname):
     The return value of this function is passed to planner.plan, and does not have to follow any particular format
     """
     domain = parser(fname)
+    
     #checking requirements
     requirements = domain[2][1:] # no check needed, requirements is not optional
     for x in requirements:
@@ -87,6 +93,7 @@ def parse_domain(fname):
             
     m_counter = 0 # keeps track of how many sections in the domain are missing
     
+    # creating the type hierarchy
     type_hierachy = {} # will be returned empty if :types is missing
     if domain[3][0] == ":types":
         # TYPE_NAME - SUBTYPE_NAME  has to become type_hierachy[TYPENAME_NAME] = SUBTYPE_NAME
@@ -106,6 +113,7 @@ def parse_domain(fname):
     else:
         m_counter += 1
     
+    # mapping constants to types
     type_to_constant = {}
     if domain[4 - m_counter][0] == ":constants":
         type_to_constant = type_to_object(domain[4 - m_counter][1:]) # getting constants without ":constants"
@@ -113,13 +121,17 @@ def parse_domain(fname):
         m_counter += 1
         
     # Predicates not needed since they are already contained in the structure of precondition/effect
-    # Action schemat contains a list of tuples for each action with parameter (dict) precondition (Expression) und effect (Expression)
+    
+    # Action schemat contains a list of tuples for each action with precondition (Expression)
+    #                                                               effect (Expression)
+    #                                                               param_structure (list) - list containing the order of the variables
+    #                                                               pred_dic (dict) - dictionary mapping variables to predicates
     act_sch = []
     for action in domain[6 - m_counter:]:
         precondition = expressions.make_expression(action[5])
         effect = expressions.make_expression(action[7])
         pred_dic, param_structure = make_pred_dic(action[3]) # dictionary of the predicates
-        act_sch.append([action[1], precondition, effect, param_structure, pred_dic]) # action name and list of all possible grounded preconditions with effects (and for the name the assigned combination)
+        act_sch.append([action[1], precondition, effect, param_structure, pred_dic])
 
     return act_sch, type_to_constant, type_hierachy
     

@@ -6,7 +6,7 @@ import pathfinding
 import sys
 from itertools import product
 
-
+# Custom node inheriting from Node that is used in the A* algorithm
 class ExpNode(graph.Node):
     def __init__(self, world, list_of_actions):
         self.world = world
@@ -29,11 +29,12 @@ class ExpNode(graph.Node):
         
         return neighbors # generated neighbor edges
     
+    # Node defined by the world state
     def get_id(self):
-        return frozenset(self.world.atoms) # No Node has same world atoms since they differ in applied changes. Make world.atoms a frozenset
+        return frozenset(self.world.atoms)
     
-    
-def substitute_all(exp, combi, dic, sorted_list): # substitutes all variables of an expression with values of combi
+# substitutes all variables of an expression with values of combi    
+def substitute_all(exp, combi, dic, sorted_list):
     subst_exp = exp
     for atom, variable in zip(combi, sorted_list): # iterate with atom from combi and variable from sorted_list
         subst_exp = expressions.Expression(expressions.substitute(subst_exp, variable, atom))
@@ -85,39 +86,34 @@ def plan(domain, problem, useheuristic=True):
         else:
             problem[0][key] = list(domain[1][key])           
     joined = problem[0]
-    
-    # print("before typehierarchy", joined, domain[2])
-    
-    def repl_subtype(type_hierarchy, key):
-        for item in type_hierarchy[key]: # iterate over the subtypes of the type
 
-            # print("item ", item)
-            # print(item, "has stuff", bool(type_hierarchy[item]))
-            
-            if not item in joined:
+    # function to replace all subtypes (innerfunction to have access to joined)
+    def repl_subtype(type_hierarchy, key, it = ""):
+        for item in type_hierarchy[it if bool(it) else key]: # iterate over the subtypes of the type or in recursive case over the items
+
+            if not item in joined: # case item is not yet in joined (has no actual world objects)
                 joined[item] = []
 
-#             if not type_hierarchy[item]:
+            if not type_hierarchy[item]: # appends all the world objects to the type
                 if key in joined:
                     joined[key] += list(joined[item])
                 else:
                     joined[key] = list(joined[item])
-#             else:
-#                 repl_subtype(type_hierarchy, item)
+                    
+            else: # recursive case (subtype of subtype)
+                repl_subtype(type_hierarchy, key, item)
 
-    
+    # maps subtypes from type_hierarchy (domain[2]) with the corresponding world objects
     for key in domain[2].keys(): # going through type_hierarchy
-        
-        # print("key", key)
-        
         if domain[2][key]: # if list is not empty
             repl_subtype(domain[2], key) # replacing subtypes
-                        
-    # print("joined ", joined)
 
     # create world from the joined dict (type hierachy, constants, objects) and the initial atoms and 
     world = expressions.make_world(problem[1], joined)
     
+    
+    # returns for each action a tuple with the action name
+    #                                 and a giant list with all possible grounded prerequesites mapped to the grounded effect
     action_list = []
     for action in domain[0]:
         param_structure = action[3]
@@ -125,15 +121,18 @@ def plan(domain, problem, useheuristic=True):
         
     # create start node for A* from world and the action schemata
     start = ExpNode(world, action_list)
-        
+    
+    # In developement
     def heuristic(state, action):
         return pathfinding.default_heuristic(state, action)
-        
+    
+    # goal is met if the given goal expression is modeled by the world
     def isgoal(state):
         if expressions.models(state.world, problem[2]): 
             return True
         return False
     
+    # calling A* on the start node will procedurally create more nodes with get_neighbors to be traversed until goal is found
     return pathfinding.astar(start, heuristic if useheuristic else pathfinding.default_heuristic, isgoal)
 
 def main(domain, problem, useheuristic):

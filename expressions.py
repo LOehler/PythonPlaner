@@ -1,26 +1,29 @@
+# global variable (list) containing all supported logical operators
 OPERATORS = ['and', 'or', 'not', '=', 'imply', 'when', 'exists', 'forall']
 
+# A logical expression with which logical operation can be done
 class Expression:
     def __init__(self, string):
-        self.string = string
-        self.name = string[0]
-        self.children = []
+        self.string = string # Actually represents the whole expression as tuple. Bad name, I know. Sorry
+        self.name = string[0] # Name of expression (either operator or world description literal (at, have, alive, ...))
+        self.children = [] # Every object or sub expressions following the name
         for child in string[1:]:
             self.children.append(Expression(child))
             
+    # applies changes to the passed world
     def apply_self_on(self, world):
-        if self.name == "and":
+        if self.name == "and": # adds to world
             for child in self.children:
                 if child.name in OPERATORS:
                     child.apply_self_on(world)
                 else:
                     world.atoms.add(child.string)
         
-        elif self.name == "not":
+        elif self.name == "not": # removes from world
             if self.children[0].string in world.atoms:
                 world.atoms.remove(self.children[0].string)
         
-        elif self.name == "when":
+        elif self.name == "when": # applies changes if when condition is met
             if models(world, self.children[0]):
                 self.children[1].apply_self_on(world)
 
@@ -30,8 +33,8 @@ class Expression:
             
 class World:
     def __init__(self, atoms, sets):
-        self.sets = sets
-        self.atoms = set(atoms) # frozenset() ????
+        self.sets = sets # A dictionary mapping all objects to types
+        self.atoms = set(atoms) # World atoms that constitute the world
         
             
 def make_expression(ast):
@@ -118,38 +121,36 @@ def models(world, expression):
     
     The return value of this function should be True if the condition holds in the given world, and False otherwise.
     """
-    # print(expression.string, '\n') # debug panic button
     
-    if expression.string in world.atoms: # recursion anchor = exists
+    if expression.string in world.atoms: # recursion anchor (if atom exists in world)
         return True
     
-    elif expression.name == 'and':
+    elif expression.name == 'and': # when all expressions are True
         for a in expression.children:
             if not models(world, a):
                 return False
         return True
     
-    elif expression.name == 'or':
+    elif expression.name == 'or': # when either expression is True
         for a in expression.children:
             if models(world, a):
                 return True
         return False
         
-    elif expression.name == 'not':
+    elif expression.name == 'not': # when the expression is not True
         if expression.children[0].string in world.atoms:
             return False
-        else:
-            return True
+        return True
 
-    elif expression.name == '=':
+    elif expression.name == '=': # when previous and following variable is equal
         return expression.children[0].string == expression.children[1].string
         
-    elif expression.name == 'imply':
+    elif expression.name == 'imply': # when first expression does not model world or second models the world
         if models(world, expression.children[0]) and not models(world, expression.children[1]):
             return False
         return True
 
-    elif expression.name == 'exists':
+    elif expression.name == 'exists': # when a variable assignment exists that models the world
         # iterating over all values with the specified type
         for value in world.sets[expression.children[0].children[1].string]: # Name of type given on the last position of the first part after exists
             # checking if world models substituted 
@@ -157,7 +158,7 @@ def models(world, expression):
                 return True
         return False
         
-    elif expression.name == 'forall':
+    elif expression.name == 'forall': # when all possible variable assignments model the world
         for value in world.sets[expression.children[0].children[1].string]:
             if not models(world, Expression(substitute(expression.children[1], expression.children[0].string[0], value))):
                 return False

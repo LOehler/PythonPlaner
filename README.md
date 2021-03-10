@@ -23,13 +23,11 @@ Files expressing a problem domain and the problem itself (wumpus problem) which 
 
 ## pddl.py
 A file that parses pddl domains and problems to be used in planner
-
-IN DEVELOPEMENT
   
 ## planner.py
 A file that uses A* implemented in pathfinding on the expressions created by pddl.py and expressions.py
 
-IN DEVELOPEMENT
+HEURISTIC IMPLEMENTATION IN DEVELOPEMENT
 
 ## runall.py
 Given an directory with at least pddl domain and problem it will run all pddl problems (with heuristic on)
