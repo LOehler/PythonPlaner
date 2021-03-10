@@ -31,6 +31,7 @@ def astar(start, heuristic, goal):
     frontier = PriorityQueue() # decides which nodes gets extendet next by sorting after expected cost (cost + heuristic_cost)
     expa_count = 0 # counts how many nodes have been expanded
     vis_count = 0 # counts how many nodes have been visited (not actually visited but looked at the edges of them)
+    vis_set = set() # just here to calculate visited correctly (will be used to check if node has been visited before)
     cost_so_far = {start.get_id():0} # The cost from the curent node (start node has cost 0)
     came_from = {} # parent relation
     cur_node = start # for better readability
@@ -59,7 +60,9 @@ def astar(start, heuristic, goal):
         # A* adds to the cost for the next neighbor a heuristic to improve search
             new_cost = neighbor.cost + cost_so_far[cur_node.get_id()]
             if neighbor.target.get_id() not in cost_so_far or new_cost < cost_so_far[neighbor.target.get_id()]:
+                
                 vis_count += 1 # incrementing visited nodes
+                
                 cost_so_far[neighbor.target.get_id()] = new_cost # updating cost_so_far with better neighbor
                 # calculate heuristic and put it on sorted stack
                 frontier.put((heuristic(cur_node, neighbor) + neighbor.cost, vis_count, neighbor)) # vis_count only in there to avoid neighbor

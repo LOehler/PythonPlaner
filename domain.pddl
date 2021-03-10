@@ -2,7 +2,7 @@
   (:requirements :adl :typing)
 
   ;; object types
-  (:types agent - mammal wumpus - mammal gold arrow - being square mammal - creature god - being creature - being)
+  (:types agent wumpus gold arrow square)
   
   (:constants the-gold - gold
               the-arrow - arrow)

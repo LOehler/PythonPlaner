@@ -15,7 +15,7 @@ This file has already been provided
 ## pathfinding.py
 A file that implements A* which traverses the graph provided by Graph.py\
 A* seems to could perform better (based on Terminal output of Teacher), meaning less nodes extensions and visits\
-Possible explanation: (visited is supposed to only count the first time when node is explored (not when its reevaluated))\
+Possible explanation: (visited is supposed to only count the first time when node is explored (not when its revisited))\
 Unrelated: if a path with lower cost of an existing node is found, this node is added to frontier *again* instead of being replaced
   
 ## .pddl

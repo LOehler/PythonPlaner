@@ -87,27 +87,47 @@ def plan(domain, problem, useheuristic=True):
             problem[0][key] = list(domain[1][key])           
     joined = problem[0]
 
-    # function to replace all subtypes (innerfunction to have access to joined)
-    def repl_subtype(type_hierarchy, key, it = ""):
-        for item in type_hierarchy[it if bool(it) else key]: # iterate over the subtypes of the type or in recursive case over the items
+#     # function to replace all subtypes (innerfunction to have access to joined)
+#     def repl_subtype(type_hierarchy, key, it = ""):
+#         for item in type_hierarchy[it if bool(it) else key]: # iterate over the subtypes of the type or in recursive case over the items
 
-            if not item in joined: # case item is not yet in joined (has no actual world objects)
-                joined[item] = []
+#             if not item in joined: # case item is not yet in joined (has no actual world objects)
+#                 joined[item] = []
 
-            if not type_hierarchy[item]: # appends all the world objects to the type
-                if key in joined:
-                    joined[key] += list(joined[item])
-                else:
-                    joined[key] = list(joined[item])
+#             if not type_hierarchy[item]: # appends all the world objects to the type
+#                 if key in joined:
+#                     joined[key] += list(joined[item])
+#                 else:
+#                     joined[key] = list(joined[item])
                     
-            else: # recursive case (subtype of subtype)
-                repl_subtype(type_hierarchy, key, item)
+#             else: # recursive case (subtype of subtype)
+#                 repl_subtype(type_hierarchy, key, item)
 
-    # maps subtypes from type_hierarchy (domain[2]) with the corresponding world objects
-    for key in domain[2].keys(): # going through type_hierarchy
-        if domain[2][key]: # if list is not empty
-            repl_subtype(domain[2], key) # replacing subtypes
+#     # maps subtypes from type_hierarchy (domain[2]) with the corresponding world objects
+#     for key in domain[2].keys(): # going through type_hierarchy
+#         if domain[2][key]: # if list is not empty
+#             repl_subtype(domain[2], key) # replacing subtypes
+    
+    # joining typehierarchy with joined
+    for key in domain[2]:
+        if key in joined:
+            joined[key] += list(domain[2][key])
+        else:
+            joined[key] = list(domain[2][key])
 
+    # removing types out of values and adding world objects
+    for key_i in joined:
+        for key_j in joined:
+            if key_i in joined[key_j]:  # if key_i is a subtype
+
+                joined[key_j].remove(key_i)  # delete subtype in entry of type
+
+                if joined[key_i]:  # if subtype already has entries
+                    list_to_copy = joined[key_i]  # copy entries of subtype
+                    # add to key_i
+                    for item in list_to_copy:
+                        joined[key_j].append(item)  # works
+        
     # create world from the joined dict (type hierachy, constants, objects) and the initial atoms and 
     world = expressions.make_world(problem[1], joined)
     
@@ -124,6 +144,19 @@ def plan(domain, problem, useheuristic=True):
     
     # In developement
     def heuristic(state, action):
+        if problem[2].name == "and": # multi goal heuristic
+            cost = len(problem[2].children) # so that we calculate with integers
+            for sub_goal in problem[2].children:
+                if expressions.models(state.world, sub_goal):
+                    cost -= 1
+            return cost
+        
+        else:
+            if expressions.models(state.world, sub_goal):
+                return 0
+            return 1
+                    
+                
         return pathfinding.default_heuristic(state, action)
     
     # goal is met if the given goal expression is modeled by the world
