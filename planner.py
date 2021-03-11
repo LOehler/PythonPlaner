@@ -15,10 +15,8 @@ class ExpNode(graph.Node):
         neighbors = []
                 
         for action in self.list_of_actions: # e.g. move, take, shoot
-            for subst_expr in action[1]:
+            for subst_expr in action[1]: # going through all possible substituted preconditions
                 if expressions.models(self.world, subst_expr[0]): # if precondition models world
-                    
-                    # print(f"\t in edge {action[0]}{tuple(subst_expr[2])}")
                     
                     changed_world = expressions.apply(self.world, subst_expr[1]) # apply changes to world
 
@@ -86,28 +84,7 @@ def plan(domain, problem, useheuristic=True):
         else:
             problem[0][key] = list(domain[1][key])           
     joined = problem[0]
-
-#     # function to replace all subtypes (innerfunction to have access to joined)
-#     def repl_subtype(type_hierarchy, key, it = ""):
-#         for item in type_hierarchy[it if bool(it) else key]: # iterate over the subtypes of the type or in recursive case over the items
-
-#             if not item in joined: # case item is not yet in joined (has no actual world objects)
-#                 joined[item] = []
-
-#             if not type_hierarchy[item]: # appends all the world objects to the type
-#                 if key in joined:
-#                     joined[key] += list(joined[item])
-#                 else:
-#                     joined[key] = list(joined[item])
-                    
-#             else: # recursive case (subtype of subtype)
-#                 repl_subtype(type_hierarchy, key, item)
-
-#     # maps subtypes from type_hierarchy (domain[2]) with the corresponding world objects
-#     for key in domain[2].keys(): # going through type_hierarchy
-#         if domain[2][key]: # if list is not empty
-#             repl_subtype(domain[2], key) # replacing subtypes
-    
+ 
     # joining typehierarchy with joined
     for key in domain[2]:
         if key in joined:
@@ -142,22 +119,19 @@ def plan(domain, problem, useheuristic=True):
     # create start node for A* from world and the action schemata
     start = ExpNode(world, action_list)
     
-    # In developement
+    # very simple subgoal heuristic that evaluates action after
     def heuristic(state, action):
         if problem[2].name == "and": # multi goal heuristic
             cost = len(problem[2].children) # so that we calculate with integers
             for sub_goal in problem[2].children:
-                if expressions.models(state.world, sub_goal):
+                if expressions.models(action.target.world, sub_goal):
                     cost -= 1
             return cost
         
         else:
-            if expressions.models(state.world, sub_goal):
+            if expressions.models(action.target.world, sub_goal):
                 return 0
             return 1
-                    
-                
-        return pathfinding.default_heuristic(state, action)
     
     # goal is met if the given goal expression is modeled by the world
     def isgoal(state):

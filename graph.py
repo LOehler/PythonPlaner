@@ -11,7 +11,7 @@ class Node:
         return []
     def __eq__(self, other):
         return self.get_id() == other.get_id()
-
+        
 class Edge:
     """
     Abstraction of a graph edge. Has a target (Node that the edge leads to), a cost (numeric) and a name (string), which can be used to print the edge.

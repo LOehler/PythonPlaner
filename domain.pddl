@@ -18,7 +18,8 @@
     :parameters (?who - agent ?from - square ?to - square)
     :precondition (and (alive ?who)
 		       (at ?who ?from)
-		       (adj ?from ?to))
+		       (adj ?from ?to)
+                        )
     :effect (and (not (at ?who ?from))
 		 (at ?who ?to)
 
