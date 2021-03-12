@@ -32,12 +32,3 @@ A very simple subgoal heuristic has been implemented
 Given an directory with at least one pddl domain and problem it will run all pddl problems
 
 This file has already been provided
-
-\
-\
-### Things that could be done
-- Representing vis_count right in pathfinding (so that it only increments the first time when it finds a node)
-- Getting rid of m_counter and putting everything in pddl.parse_domain in a while loop (asking for example if domain[i][0] == ":requirements"
-- The heuristic is bad (cut down to 6000 from 6600 visited nodes in p-07-airport2) and only helps if there are multiple goals. Something like Fast Forward or Fast Downward would be better
-- Using inheritance (with subclasses of Expression i.e. AndExpression) in expressions.py to avoid unnecessary string comparisons when expression is asked to model the model multiple times
-- (planner.py) Only the prerequesite substitution list could  be given to the ExpNode where it can than create the effect. Meaning that instead of already giving the substituted effects, the combi  (substitutet variables) should be given next to the the substituted prerequesites (to get_neighbor). This would prevent the unnecessary creation of substituted effects (while only costing little in get_neighbor). Our planner struggles a bit with the whole airport-adl problem package because the large amount of preprocessing (10 nodes expanded but 27 sec needed)
