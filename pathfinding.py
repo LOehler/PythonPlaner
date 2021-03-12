@@ -37,26 +37,7 @@ def astar(start, heuristic, goal):
 
     while True: # Runs until goal is found or frontier is empty
         
-        expa_count += 1
-        # getting all neighbors and adding it to PriorityQueue
-        for neighbor in cur_node.get_neighbors(): # get_neighbors() = list with graph.Edge
-        # looking for best heuristic in all neighbors
-        # A* adds to the cost for the next neighbor a heuristic to improve search
-        
-            new_cost = neighbor.cost + cost_so_far[cur_node.get_id()]
-            if neighbor.target.get_id() not in cost_so_far or new_cost < cost_so_far[neighbor.target.get_id()]:
-                vis_count += 1 # incrementing visited nodes
-                cost_so_far[neighbor.target.get_id()] = new_cost # updating cost_so_far with better neighbor
-                # calculate heuristic and put it on sorted stack
-                frontier.put((heuristic(cur_node, neighbor) + neighbor.cost, vis_count, neighbor)) # vis_count only in there to avoid neighbor
-                                                                                                   # comparison (ask for more detailed explenation!)
-                came_from[neighbor.target.get_id()] = cur_node # set parrent (for retracing the path)
-
-
-        new_edge = frontier.get()[2] # Gets the Edge of the lowest Heuristic
-        cur_node = new_edge.target
-         
-        if goal(cur_node):
+        if goal(cur_node):            
             cost = 0
             edge_path = []
             while cur_node != start:
@@ -69,9 +50,28 @@ def astar(start, heuristic, goal):
                 edge_path.append(prev_edge)
                 cur_node = came_from[cur_node.get_id()]
             return edge_path[::-1], cost, vis_count, expa_count
+        
+        expa_count += 1
+        
+        # getting all neighbors and adding it to PriorityQueue       
+        for neighbor in cur_node.get_neighbors(): # get_neighbors() = list with graph.Edge
+        # looking for best heuristic in all neighbors
+        # A* adds to the cost for the next neighbor a heuristic to improve search
+            new_cost = neighbor.cost + cost_so_far[cur_node.get_id()]
+            if neighbor.target.get_id() not in cost_so_far or new_cost < cost_so_far[neighbor.target.get_id()]:
+                
+                vis_count += 1 # incrementing visited nodes
+                
+                cost_so_far[neighbor.target.get_id()] = new_cost # updating cost_so_far with better neighbor
+                # calculate heuristic and put it on sorted stack
+                frontier.put((heuristic(cur_node, neighbor) + neighbor.cost, vis_count, neighbor)) # vis_count only in there to avoid neighbor
+                                                                                                   # comparison (ask for more detailed explanation!)
+                came_from[neighbor.target.get_id()] = cur_node # set parrent (for retracing the path)
+         
         if frontier.empty():
             return [],0, vis_count, expa_count
 
+        cur_node = frontier.get()[2].target # Gets the next node of the lowest Heuristic
 
 
 def print_path(result):
